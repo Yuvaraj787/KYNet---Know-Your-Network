@@ -1,288 +1,433 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart';
-import 'dart:convert';
-import 'sample_feature/sample_item_details_view.dart';
-import 'sample_feature/sample_item_list_view.dart';
-import 'settings/settings_controller.dart';
-import 'settings/settings_view.dart';
+import 'package:speed_checker_plugin/speed_checker_plugin.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
-/// The Widget that configures your application.
-class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    required this.settingsController,
-  });
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
-  final SettingsController settingsController;
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const int backgroundColor = 0xFFE5E5E5;
+
+  String _status = '';
+  int _ping = 0;
+  String _server = '';
+  String _connectionType = '';
+  double _currentSpeed = 0;
+  int _percent = 0;
+  double _downloadSpeed = 0;
+  double _uploadSpeed = 0;
+  String _ip = '';
+  String _isp = '';
+  final _plugin = SpeedCheckerPlugin();
+  late StreamSubscription<SpeedTestResult> _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /**
+        Uncomment the method, for which platform you want to build a demo app. Put
+        in this methods your license for android or ios. You can use both
+        methods simultaneously if you have licenses for both platforms
+     */
+    // _plugin.setAndroidLicenseKey('your_android_license_key');
+    // _plugin.setIosLicenseKey('your_ios_license_key');
+  }
+
+  @override
+  void dispose() {
+    _plugin.dispose();
+    super.dispose();
+  }
+
+  void getSpeedStats() {
+    _plugin.startSpeedTest();
+    _subscription = _plugin.speedTestResultStream.listen((result) {
+      setState(() {
+        _status = result.status;
+        _ping = result.ping;
+        _percent = result.percent;
+        _currentSpeed = result.currentSpeed;
+        _downloadSpeed = result.downloadSpeed;
+        _uploadSpeed = result.uploadSpeed;
+        _server = result.server;
+        _connectionType = result.connectionType;
+        _ip = result.ip;
+        _isp = result.isp;
+        if (result.error.isNotEmpty) {
+          Fluttertoast.showToast(msg: result.error.toString());
+        }
+      });
+    }, onDone: () {
+      _subscription.cancel();
+    }, onError: (error) {
+      _status = error.toString();
+      _subscription.cancel();
+    });
+  }
+
+  void stopTest() {
+    _plugin.stopTest();
+    _subscription = _plugin.speedTestResultStream.listen((result) {
+      setState(() {
+        _status = "Speed test stopped";
+        _ping = 0;
+        _percent = 0;
+        _currentSpeed = 0;
+        _downloadSpeed = 0;
+        _uploadSpeed = 0;
+        _server = '';
+        _connectionType = '';
+        _ip = '';
+        _isp = '';
+      });
+    }, onDone: () {
+      _subscription.cancel();
+    });
+  }
+
+  void getCustomSpeedStats() {
+    _plugin.startSpeedTestWithOptionsAndServer(
+        const SpeedTestOptions(sendResultsToSpeedChecker: true),
+        const SpeedTestServer(
+            domain: 'dig20ny.speedcheckerapi.com',
+            downloadFolderPath: '/',
+            uploadFolderPath: '/',
+            city: 'New York 2',
+            country: 'USA',
+            countryCode: 'US',
+            id: 104));
+
+    _subscription = _plugin.speedTestResultStream.listen((result) {
+      setState(() {
+        _status = result.status;
+        _ping = result.ping;
+        _percent = result.percent;
+        _currentSpeed = result.currentSpeed;
+        _downloadSpeed = result.downloadSpeed;
+        _uploadSpeed = result.uploadSpeed;
+        _server = result.server;
+        _connectionType = result.connectionType;
+        _ip = result.ip;
+        _isp = result.isp;
+        if (result.error.isNotEmpty) {
+          Fluttertoast.showToast(msg: result.error.toString());
+        }
+      });
+    }, onDone: () {
+      _subscription.cancel();
+    }, onError: (error) {
+      _status = error.toString();
+      _subscription.cancel();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        textTheme: GoogleFonts.robotoTextTheme(
+          Theme.of(context).textTheme,
+        ),
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('KYNet Data Collection Tool'),
+          title: const Text('Speed Checker flutter plugin demo app'),
         ),
-        body: Center(
-          child: TimeButton(),
+        body: Container(
+          color: const Color(backgroundColor).withOpacity(0.5),
+          child: Center(
+            child: Column(
+              children: [
+                Container(
+                    margin: const EdgeInsets.symmetric(vertical: 20),
+                    child: Text(_status,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            color: Color(SpeedMeter.mainRedColor)))),
+                Container(
+                  margin: const EdgeInsets.only(top: 20, bottom: 50),
+                  child: SpeedMeter(
+                      currentSpeed: _currentSpeed, percent: _percent),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: ElevatedButton(
+                        onPressed: getSpeedStats,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(SpeedMeter.mainRedColor),
+                            textStyle: const TextStyle(fontSize: 16)),
+                        child: Text(
+                          "start test".toUpperCase(),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: ElevatedButton(
+                        onPressed: getCustomSpeedStats,
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(SpeedMeter.mainRedColor),
+                            textStyle: const TextStyle(fontSize: 16)),
+                        child: Text(
+                          "start custom test".toUpperCase(),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: ElevatedButton(
+                    onPressed: stopTest,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(SpeedMeter.mainRedColor),
+                        textStyle: const TextStyle(fontSize: 16)),
+                    child: Text(
+                      "stop test".toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text('Speed test results'.toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(SpeedMeter.blackTextColor))),
+                ),
+                Container(
+                  alignment: Alignment.topLeft,
+                  margin: const EdgeInsets.only(left: 50),
+                  child: Wrap(
+                    direction: Axis.vertical,
+                    spacing: 5,
+                    children: [
+                      Text(
+                        'Server: $_server',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Ping: $_ping',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Download speed: ${_downloadSpeed.toStringAsFixed(2)} Mbps',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Upload speed: ${_uploadSpeed.toStringAsFixed(2)} Mbps',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Connection Type: $_connectionType',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'User IP: $_ip',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'User ISP: $_isp',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class TimeButton extends StatefulWidget {
-  @override
-  _TimeButtonState createState() => _TimeButtonState();
-}
+class SpeedMeter extends StatelessWidget {
+  final double maxValue = 100;
+  final double currentSpeed;
+  final int percent;
+  final double thickness = 20;
 
-class _TimeButtonState extends State<TimeButton> {
-  Map<String, String> _parameters = {};
+  static const int mainRedColor = 0xFFAF0017;
+  static const int startProgressColor = 0xFFE53032;
+  static const int endProgressColor = 0xFF960C0E;
+  static const int tickColor = 0xFF999999;
+  static const int greyCircleColor = 0xFFE7E7E6;
+  static const int blackTextColor = 0xFF333333;
 
-  String _environmentType = 'crowded';
-  String _location = 'IT Dept';
-  String _environment = 'indoor';
-  String _lat = '';
-  String _longi = '';
-  String _floor = '0';
-
-  void _updateParameters() async {
-    String isp = await _getISP();
-    setState(() {
-      _parameters = {
-        'RSSI': _getRSSI(),
-        'RSRP': _getRSRP(),
-        'RSRQ': _getRSRQ(),
-        'SINR': _getSINR(),
-        'RF-NC': _getRFNC(),
-        'p-a': _getPA(),
-        'Band': _getBand(),
-        'Num Carriers': _getNumCarriers(),
-        'RSPath Loss': _getRSPathLoss(),
-        'TA': _getTA(),
-        'Shannon': _getShannon(),
-        'CellLoad': _getCellLoad(),
-        'RF-RX0': _getRFRX0(),
-        'RF-RX1': _getRFRX1(),
-        'RF-RX2': _getRFRX2(),
-        'RF-RX3': _getRFRX3(),
-        'RI sum': _getRISum(),
-        'CQI': _getCQI(),
-        'CRI': _getCRI(),
-        'Time': DateTime.now().toString(),
-        'DAY': _getDay(),
-        'TYPE OF DAY': _getTypeOfDay(),
-        'INTERNET SERVICE PROVIDER': isp,
-        'SIGNAL STRENGTH': _getSignalStrength(),
-        'INTERNET UPLOAD SPEED': _getUploadSpeed(),
-        'INTERNET DOWNLOAD SPEED': _getDownloadSpeed(),
-        'NETWORK TYPE': _getNetworkType(),
-        'ENVIRONMENT TYPE': _environmentType,
-        'LATENCY': _getLatency(),
-        'LOCATION NAME': _location,
-        'LATITUDE': _lat,
-        'LONGITUDE': _longi,
-        'ENVIRONMENT': _environment,
-        'WEATHER': _getWeather(),
-        'TIME PERIOD': _getTimePeriod(),
-        'FLOOR': _floor,
-      };
-      _sendParametersToDatabase(_parameters);
-    });
-  }
-
-  Future<String> _getISP() async {
-    // Get the current connectivity status
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      return 'No internet connection';
-    }
-
-    // Use a third-party API to get ISP information based on IP address
-    final response = await http.get(Uri.parse('https://ipinfo.io/json'));
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      return data['org'] ?? 'Unknown ISP';
-    } else {
-      return 'Failed to get ISP information';
-    }
-  }
-
-  void _sendParametersToDatabase(Map<String, String> parameters) {
-    // Implement your database sending logic here
-    print('Sending parameters to database: $parameters');
-  }
-
-  Future<double> _getLongitude() async {
-    
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
-    print(position.longitude);
-    
-    setState(() {
-      _longi = position.longitude.toString();
-      _lat = position.latitude.toString();
-    });
-
-    return position.longitude;
-  }
-
-  // Placeholder methods for data retrieval logic
-  String _getRSSI() => 'RSSI Value';
-  String _getRSRP() => 'RSRP Value';
-  String _getRSRQ() => 'RSRQ Value';
-  String _getSINR() => 'SINR Value';
-  String _getRFNC() => 'RF-NC Value';
-  String _getPA() => 'p-a Value';
-  String _getBand() => 'Band Value';
-  String _getNumCarriers() => 'Num Carriers Value';
-  String _getRSPathLoss() => 'RSPath Loss Value';
-  String _getTA() => 'TA Value';
-  String _getShannon() => 'Shannon Value';
-  String _getCellLoad() => 'CellLoad Value';
-  String _getRFRX0() => 'RF-RX0 Value';
-  String _getRFRX1() => 'RF-RX1 Value';
-  String _getRFRX2() => 'RF-RX2 Value';
-  String _getRFRX3() => 'RF-RX3 Value';
-  String _getRISum() => 'RI sum Value';
-  String _getCQI() => 'CQI Value';
-  String _getCRI() => 'CRI Value';
-  String _getDay() {
-    List<String> days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-    _getLongitude();
-    return days[DateTime.now().weekday - 1];
-  }
-
-  String _getTypeOfDay() {
-    int day = DateTime.now().weekday;
-    return (day == DateTime.saturday || day == DateTime.sunday)
-        ? 'weekend'
-        : 'weekday';
-  }
-
-  String _getTimePeriod() {
-    int hour = DateTime.now().hour;
-    if (hour >= 6 && hour < 12) {
-      return 'morning';
-    } else if (hour >= 12 && hour < 17) {
-      return 'afternoon';
-    } else if (hour >= 17 && hour < 21) {
-      return 'evening';
-    } else {
-      return 'night';
-    }
-  }
-
-  String _getSignalStrength() => 'Signal Strength Value';
-  String _getUploadSpeed() => 'Upload Speed Value';
-  String _getDownloadSpeed() => 'Download Speed Value';
-  String _getNetworkType() => 'Network Type Value';
-  String _getLatency() => 'Latency Value';
-  String _getLocationName() => 'Location Name Value';
-  String _getEnvironment() => 'Environment Value';
-  String _getWeather() => 'Weather Value';
-  String _getFloor() => 'Floor Value';
+  const SpeedMeter({super.key, this.currentSpeed = 100, this.percent = 50});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Center(
+        child: Stack(
       children: [
-        DropdownButton<String>(
-          value: _environmentType,
-          onChanged: (String? newValue) {
-            setState(() {
-              _environmentType = newValue!;
-            });
-          },
-          items: <String>['crowded', 'free']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-        ),
-        DropdownButton<String>(
-          value: _location,
-          onChanged: (String? newValue) {
-            setState(() {
-              _location = newValue!;
-            });
-          },
-          items: <String>['IT Dept', 'Kp', 'INDIA', 'Thailand', 'Vivek Audi']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-        ),
-        DropdownButton<String>(
-          value: _environment,
-          onChanged: (String? newValue) {
-            setState(() {
-              _environment = newValue!;
-            });
-          },
-          items: <String>['indoor', 'outdoor']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-        ),
-        DropdownButton<String>(
-          value: _floor,
-          onChanged: (String? newValue) {
-            setState(() {
-              _floor = newValue!;
-            });
-          },
-          items: <String>['0', '1', '2', '3', '4', '5']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-        ),
-        ElevatedButton(
-          onPressed: _updateParameters,
-          child: Text('Test now'),
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-            textStyle: TextStyle(fontSize: 20),
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(currentSpeed.toStringAsFixed(2),
+                  style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.8,
+                      color: Color(mainRedColor))),
+              const Text('Mbps',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(blackTextColor))),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Progress: '.toUpperCase(),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: -0.8,
+                            color: Color(blackTextColor)),
+                      ),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          "${percent.round()}%",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(mainRedColor)),
+                        ),
+                      )
+                    ]),
+              ),
+              Container(
+                width: 100,
+                margin: const EdgeInsets.only(top: 3),
+                child: SfLinearGauge(
+                  showLabels: false,
+                  showTicks: false,
+                  showAxisTrack: true,
+                  axisTrackStyle: LinearAxisTrackStyle(
+                    thickness: thickness,
+                    edgeStyle: LinearEdgeStyle.bothCurve,
+                    color: Colors.white,
+                  ),
+                  barPointers: [
+                    LinearBarPointer(
+                      value: percent.toDouble(),
+                      thickness: thickness,
+                      edgeStyle: LinearEdgeStyle.bothCurve,
+                      shaderCallback: (Rect bounds) {
+                        return const LinearGradient(colors: [
+                          Color(startProgressColor),
+                          Color(endProgressColor)
+                        ], stops: [
+                          0.0,
+                          1.0
+                        ]).createShader(bounds);
+                      },
+                    ),
+                  ],
+                ),
+              )
+            ],
           ),
         ),
-        SizedBox(height: 20),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _parameters.length,
-            itemBuilder: (context, index) {
-              String key = _parameters.keys.elementAt(index);
-              return ListTile(
-                title: Text('$key:- ${_parameters[key]}'),
-              );
-            },
+        SizedBox(
+          width: 230,
+          height: 230,
+          child: SfRadialGauge(
+            axes: [
+              RadialAxis(
+                radiusFactor: 1,
+                showLabels: false,
+                showTicks: false,
+                maximum: maxValue,
+                startAngle: 90,
+                endAngle: 360,
+                axisLineStyle: AxisLineStyle(
+                  thickness: thickness,
+                  cornerStyle: CornerStyle.endCurve,
+                  color: Colors.white,
+                ),
+                pointers: <GaugePointer>[
+                  RangePointer(
+                    value: currentSpeed,
+                    width: thickness,
+                    cornerStyle: CornerStyle.endCurve,
+                    sizeUnit: GaugeSizeUnit.logicalPixel,
+                    enableAnimation: true,
+                    gradient: const SweepGradient(
+                      colors: [
+                        Color(startProgressColor),
+                        Color(endProgressColor)
+                      ],
+                      stops: <double>[0.0, 1.0],
+                    ),
+                  ),
+                ],
+              ),
+              RadialAxis(
+                showAxisLine: false,
+                showLabels: false,
+                showTicks: false,
+                startAngle: 180,
+                endAngle: 360,
+                radiusFactor: 0.75,
+                ranges: [
+                  GaugeRange(
+                    startValue: 0,
+                    endValue: 100,
+                    startWidth: 0,
+                    endWidth: thickness * 1.4,
+                    color: const Color(greyCircleColor),
+                  )
+                ],
+              ),
+              RadialAxis(
+                radiusFactor: 1.2,
+                showAxisLine: false,
+                showLabels: false,
+                showTicks: true,
+                maximum: 270,
+                startAngle: 90,
+                endAngle: 360,
+                interval: 90,
+                majorTickStyle: MajorTickStyle(
+                    length: thickness / 2,
+                    thickness: thickness / 4,
+                    color: const Color(tickColor)),
+                minorTicksPerInterval: 8,
+                tickOffset: thickness * 0.7,
+                ticksPosition: ElementsPosition.outside,
+                minorTickStyle: MinorTickStyle(thickness: thickness / 8),
+              )
+            ],
           ),
-        ),
+        )
       ],
-    );
+    ));
   }
 }
