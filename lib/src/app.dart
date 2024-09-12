@@ -9,26 +9,24 @@ import 'sample_feature/sample_item_details_view.dart';
 import 'sample_feature/sample_item_list_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
+import 'package:flutter/material.dart';
+import 'package:speed_test_dart/speed_test_dart.dart';
 
-/// The Widget that configures your application.
+void main() {
+  runApp(MyApp());
+}
+
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    required this.settingsController,
-  });
-
-  final SettingsController settingsController;
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'KyNet Data Collection Tool',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('KYNet Data Collection Tool'),
+          title: Text('KyNet Data Collection Tool'),
         ),
         body: Center(
           child: TimeButton(),
@@ -47,14 +45,22 @@ class _TimeButtonState extends State<TimeButton> {
   Map<String, String> _parameters = {};
 
   String _environmentType = 'crowded';
-  String _location = 'IT Dept';
+  String _location = 'A';
   String _environment = 'indoor';
-  String _lat = '';
-  String _longi = '';
   String _floor = '0';
+  String _uploadSpeed = 'N/A';
+  String _downloadSpeed = 'N/A';
 
-  void _updateParameters() async {
-    String isp = await _getISP();
+  @override
+  void initState() {
+    super.initState();
+    _updateParameters(); // Perform initial parameter update
+  }
+
+  Future<void> _updateParameters() async {
+    // Perform the speed test
+    await _performSpeedTest();
+
     setState(() {
       _parameters = {
         'RSSI': _getRSSI(),
@@ -79,16 +85,16 @@ class _TimeButtonState extends State<TimeButton> {
         'Time': DateTime.now().toString(),
         'DAY': _getDay(),
         'TYPE OF DAY': _getTypeOfDay(),
-        'INTERNET SERVICE PROVIDER': isp,
+        'INTERNET SERVICE PROVIDER': _getISP(),
         'SIGNAL STRENGTH': _getSignalStrength(),
-        'INTERNET UPLOAD SPEED': _getUploadSpeed(),
-        'INTERNET DOWNLOAD SPEED': _getDownloadSpeed(),
+        'INTERNET UPLOAD SPEED': _uploadSpeed,
+        'INTERNET DOWNLOAD SPEED': _downloadSpeed,
         'NETWORK TYPE': _getNetworkType(),
         'ENVIRONMENT TYPE': _environmentType,
         'LATENCY': _getLatency(),
         'LOCATION NAME': _location,
-        'LATITUDE': _lat,
-        'LONGITUDE': _longi,
+        'LATITUDE': _getLatitude(),
+        'LONGITUDE': _getLongitude(),
         'ENVIRONMENT': _environment,
         'WEATHER': _getWeather(),
         'TIME PERIOD': _getTimePeriod(),
@@ -98,20 +104,35 @@ class _TimeButtonState extends State<TimeButton> {
     });
   }
 
-  Future<String> _getISP() async {
-    // Get the current connectivity status
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) {
-      return 'No internet connection';
-    }
+  Future<void> _performSpeedTest() async {
+    try {
+      final client = SpeedTestDart();
 
-    // Use a third-party API to get ISP information based on IP address
-    final response = await http.get(Uri.parse('https://ipinfo.io/json'));
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      return data['org'] ?? 'Unknown ISP';
-    } else {
-      return 'Failed to get ISP information';
+      // Get settings, which includes the list of available servers
+      final settings = await client.getSettings();
+      final servers = settings.servers; // List of available servers
+
+      // Perform the download speed test using the list of servers
+      final downloadResult = await client.testDownloadSpeed(
+        servers: servers,
+      );
+
+      // Perform the upload speed test using the list of servers
+      final uploadResult = await client.testUploadSpeed(
+        servers: servers,
+      );
+
+      // Update the state with the results
+      setState(() {
+        _downloadSpeed = '${downloadResult.toStringAsFixed(2)} Mbps';
+        _uploadSpeed = '${uploadResult.toStringAsFixed(2)} Mbps';
+      });
+    } catch (e) {
+      print('Speed test failed: $e');
+      setState(() {
+        _downloadSpeed = 'Failed';
+        _uploadSpeed = 'Failed';
+      });
     }
   }
 
@@ -120,82 +141,37 @@ class _TimeButtonState extends State<TimeButton> {
     print('Sending parameters to database: $parameters');
   }
 
-  Future<double> _getLongitude() async {
-    
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
-    print(position.longitude);
-    
-    setState(() {
-      _longi = position.longitude.toString();
-      _lat = position.latitude.toString();
-    });
-
-    return position.longitude;
-  }
-
-  // Placeholder methods for data retrieval logic
-  String _getRSSI() => 'RSSI Value';
-  String _getRSRP() => 'RSRP Value';
-  String _getRSRQ() => 'RSRQ Value';
-  String _getSINR() => 'SINR Value';
-  String _getRFNC() => 'RF-NC Value';
-  String _getPA() => 'p-a Value';
-  String _getBand() => 'Band Value';
-  String _getNumCarriers() => 'Num Carriers Value';
+  
+  String _getRSSI() => 'RSSI Value'; 
+  String _getRSRP() => 'RSRP Value'; 
+  String _getRSRQ() => 'RSRQ Value'; 
+  String _getSINR() => 'SINR Value'; 
+  String _getRFNC() => 'RF-NC Value'; 
+  String _getPA() => 'p-a Value'; 
+  String _getBand() => 'Band Value'; 
+  String _getNumCarriers() => 'Num Carriers Value'; 
   String _getRSPathLoss() => 'RSPath Loss Value';
-  String _getTA() => 'TA Value';
-  String _getShannon() => 'Shannon Value';
-  String _getCellLoad() => 'CellLoad Value';
-  String _getRFRX0() => 'RF-RX0 Value';
+  String _getTA() => 'TA Value'; 
+  String _getShannon() => 'Shannon Value'; 
+  String _getCellLoad() => 'CellLoad Value'; 
+  String _getRFRX0() => 'RF-RX0 Value'; 
   String _getRFRX1() => 'RF-RX1 Value';
   String _getRFRX2() => 'RF-RX2 Value';
-  String _getRFRX3() => 'RF-RX3 Value';
-  String _getRISum() => 'RI sum Value';
-  String _getCQI() => 'CQI Value';
-  String _getCRI() => 'CRI Value';
-  String _getDay() {
-    List<String> days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-    _getLongitude();
-    return days[DateTime.now().weekday - 1];
-  }
-
-  String _getTypeOfDay() {
-    int day = DateTime.now().weekday;
-    return (day == DateTime.saturday || day == DateTime.sunday)
-        ? 'weekend'
-        : 'weekday';
-  }
-
-  String _getTimePeriod() {
-    int hour = DateTime.now().hour;
-    if (hour >= 6 && hour < 12) {
-      return 'morning';
-    } else if (hour >= 12 && hour < 17) {
-      return 'afternoon';
-    } else if (hour >= 17 && hour < 21) {
-      return 'evening';
-    } else {
-      return 'night';
-    }
-  }
-
-  String _getSignalStrength() => 'Signal Strength Value';
-  String _getUploadSpeed() => 'Upload Speed Value';
-  String _getDownloadSpeed() => 'Download Speed Value';
-  String _getNetworkType() => 'Network Type Value';
-  String _getLatency() => 'Latency Value';
-  String _getLocationName() => 'Location Name Value';
-  String _getEnvironment() => 'Environment Value';
-  String _getWeather() => 'Weather Value';
-  String _getFloor() => 'Floor Value';
+  String _getRFRX3() => 'RF-RX3 Value'; 
+  String _getRISum() => 'RI sum Value'; 
+  String _getCQI() => 'CQI Value'; 
+  String _getCRI() => 'CRI Value'; 
+  String _getDay() => 'Day Value'; 
+  String _getTypeOfDay() => 'Type of Day Value'; 
+  String _getISP() => 'ISP Value'; 
+  String _getSignalStrength() => 'Signal Strength Value'; 
+  String _getNetworkType() => 'Network Type Value'; 
+  String _getLatency() => 'Latency Value'; 
+  String _getLatitude() => 'Latitude Value'; 
+  String _getLongitude() => 'Longitude Value'; 
+  String _getWeather() => 'Weather Value'; 
+  String _getTimePeriod() => 'Time Period Value'; 
+  String _getFloor() => 'Floor Value'; 
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +200,7 @@ class _TimeButtonState extends State<TimeButton> {
               _location = newValue!;
             });
           },
-          items: <String>['IT Dept', 'Kp', 'INDIA', 'Thailand', 'Vivek Audi']
+          items: <String>['A', 'B', 'C', 'D', 'E']
               .map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
@@ -277,7 +253,7 @@ class _TimeButtonState extends State<TimeButton> {
             itemBuilder: (context, index) {
               String key = _parameters.keys.elementAt(index);
               return ListTile(
-                title: Text('$key:- ${_parameters[key]}'),
+                title: Text('$key: ${_parameters[key]}'),
               );
             },
           ),
