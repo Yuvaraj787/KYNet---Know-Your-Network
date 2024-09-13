@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'KyNet',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -55,6 +55,7 @@ class _TimeButtonState extends State<TimeButton> {
 
   void _updateParameters() async {
     String isp = await _getISP();
+    String weather = await _getWeather();
     setState(() {
       _parameters = {
         'RSSI': _getRSSI(),
@@ -90,7 +91,7 @@ class _TimeButtonState extends State<TimeButton> {
         'LATITUDE': _lat,
         'LONGITUDE': _longi,
         'ENVIRONMENT': _environment,
-        'WEATHER': _getWeather(),
+        'WEATHER': weather,
         'TIME PERIOD': _getTimePeriod(),
         'FLOOR': _floor,
       };
@@ -121,10 +122,10 @@ class _TimeButtonState extends State<TimeButton> {
   }
 
   Future<double> _getLongitude() async {
-    
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
     print(position.longitude);
-    
+
     setState(() {
       _longi = position.longitude.toString();
       _lat = position.latitude.toString();
@@ -192,10 +193,32 @@ class _TimeButtonState extends State<TimeButton> {
   String _getDownloadSpeed() => 'Download Speed Value';
   String _getNetworkType() => 'Network Type Value';
   String _getLatency() => 'Latency Value';
-  String _getLocationName() => 'Location Name Value';
-  String _getEnvironment() => 'Environment Value';
-  String _getWeather() => 'Weather Value';
-  String _getFloor() => 'Floor Value';
+
+  Future<String> _getWeather() async {
+    if (_lat.isEmpty || _longi.isEmpty) {
+      await _getLongitude();
+    }
+    const apiKey = 'cd908d976e0a1eed6e522b5af2bf5ab7';
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_longi&appid=$apiKey&units=metric';
+
+    // Debug prints
+    print('Fetching weather for lat: $_lat, lon: $_longi');
+    print('Request URL: $url');
+
+    final response = await http.get(Uri.parse(url));
+
+    // Debug prints
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      return data['weather'][0]['description'] ?? 'Unknown weather';
+    } else {
+      return 'Failed to get weather information';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
