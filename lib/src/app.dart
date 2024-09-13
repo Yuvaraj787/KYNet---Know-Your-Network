@@ -37,8 +37,14 @@ class _MyAppState extends State<MyApp> {
   String dayType = ''; // weekday or weekend
   String session =
       ''; // early morning or morning or afternoon or evening or night or midnight
-  String temparature = "";
-  String climate = "";
+
+  // New variables for additional inputs
+  String _environmentType = 'Crowded';
+  String _locationName = '';
+  String _environment = 'Indoor';
+  int _floor = 0;
+
+  final TextEditingController _locationNameController = TextEditingController();
 
   void setTimeDetails() {
     DateTime now = DateTime.now();
@@ -105,6 +111,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _plugin.dispose();
+    _locationNameController.dispose();
     super.dispose();
   }
 
@@ -225,6 +232,70 @@ class _MyAppState extends State<MyApp> {
                     child: SpeedMeter(
                         currentSpeed: _currentSpeed, percent: _percent),
                   ),
+                  // Input fields for additional inputs
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      children: [
+                        DropdownButton<String>(
+                          value: _environmentType,
+                          items:
+                              <String>['Crowded', 'Free'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _environmentType = newValue!;
+                            });
+                          },
+                        ),
+                        TextField(
+                          controller: _locationNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Location Name',
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _locationName = value;
+                            });
+                          },
+                        ),
+                        DropdownButton<String>(
+                          value: _environment,
+                          items:
+                              <String>['Indoor', 'Outdoor'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _environment = newValue!;
+                            });
+                          },
+                        ),
+                        DropdownButton<int>(
+                          value: _floor,
+                          items: List.generate(5, (index) => index)
+                              .map((int value) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text(value.toString()),
+                            );
+                          }).toList(),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              _floor = newValue!;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -328,7 +399,24 @@ class _MyAppState extends State<MyApp> {
                         Text(
                           'Temparature : $temparature',
                           style: const TextStyle(fontSize: 16),
-                        )
+                        ),
+                        // Display additional inputs
+                        Text(
+                          'Environment Type: $_environmentType',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Location Name: $_locationName',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Environment: $_environment',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Floor: $_floor',
+                          style: const TextStyle(fontSize: 16),
+                        ),
                       ],
                     ),
                   )
