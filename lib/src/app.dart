@@ -5,6 +5,7 @@ import 'package:speed_checker_plugin/speed_checker_plugin.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -26,6 +27,62 @@ class _MyAppState extends State<MyApp> {
   double _uploadSpeed = 0;
   String _ip = '';
   String _isp = '';
+  String lat = '';
+  String long = '';
+
+  String date = ''; //dd-mm-yyyy
+  String time = ''; // hh:mm
+  String day = ''; // monday to sunday
+  String dayType = ''; // weekday or weekend
+  String session =
+      ''; // early morning or morning or afternoon or evening or night or midnight
+
+  void setTimeDetails() {
+    DateTime now = DateTime.now();
+
+    // Setting date in dd-mm-yyyy format
+    date =
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+
+    // Setting time in hh:mm format
+    time =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    // Setting day name (e.g., Monday to Sunday)
+    List<String> days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
+    day = days[now.weekday % 7];
+
+    // Setting dayType (weekday or weekend)
+    dayType =
+        (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday)
+            ? 'Weekend'
+            : 'Weekday';
+
+    // Setting session (early morning, morning, afternoon, evening, night, midnight)
+    int hour = now.hour;
+    if (hour >= 0 && hour < 6) {
+      session = 'Midnight';
+    } else if (hour >= 6 && hour < 9) {
+      session = 'Early Morning';
+    } else if (hour >= 9 && hour < 12) {
+      session = 'Morning';
+    } else if (hour >= 12 && hour < 16) {
+      session = 'Afternoon';
+    } else if (hour >= 16 && hour < 20) {
+      session = 'Evening';
+    } else {
+      session = 'Night';
+    }
+  }
+
   final _plugin = SpeedCheckerPlugin();
   late StreamSubscription<SpeedTestResult> _subscription;
 
@@ -48,8 +105,21 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  Future<void> getLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    print(position.longitude);
+
+    setState(() {
+      long = position.longitude.toString();
+      lat = position.latitude.toString();
+    });
+  }
+
   void getSpeedStats() {
     _plugin.startSpeedTest();
+    getLocation();
+    setTimeDetails();
     _subscription = _plugin.speedTestResultStream.listen((result) {
       setState(() {
         _status = result.status;
@@ -94,42 +164,6 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void getCustomSpeedStats() {
-    _plugin.startSpeedTestWithOptionsAndServer(
-        const SpeedTestOptions(sendResultsToSpeedChecker: true),
-        const SpeedTestServer(
-            domain: 'dig20ny.speedcheckerapi.com',
-            downloadFolderPath: '/',
-            uploadFolderPath: '/',
-            city: 'New York 2',
-            country: 'USA',
-            countryCode: 'US',
-            id: 104));
-
-    _subscription = _plugin.speedTestResultStream.listen((result) {
-      setState(() {
-        _status = result.status;
-        _ping = result.ping;
-        _percent = result.percent;
-        _currentSpeed = result.currentSpeed;
-        _downloadSpeed = result.downloadSpeed;
-        _uploadSpeed = result.uploadSpeed;
-        _server = result.server;
-        _connectionType = result.connectionType;
-        _ip = result.ip;
-        _isp = result.isp;
-        if (result.error.isNotEmpty) {
-          Fluttertoast.showToast(msg: result.error.toString());
-        }
-      });
-    }, onDone: () {
-      _subscription.cancel();
-    }, onError: (error) {
-      _status = error.toString();
-      _subscription.cancel();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -140,117 +174,126 @@ class _MyAppState extends State<MyApp> {
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Speed Checker flutter plugin demo app'),
+          title: const Text('KYNet'),
         ),
         body: Container(
           color: const Color(backgroundColor).withOpacity(0.5),
           child: Center(
-            child: Column(
-              children: [
-                Container(
-                    margin: const EdgeInsets.symmetric(vertical: 20),
-                    child: Text(_status,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            color: Color(SpeedMeter.mainRedColor)))),
-                Container(
-                  margin: const EdgeInsets.only(top: 20, bottom: 50),
-                  child: SpeedMeter(
-                      currentSpeed: _currentSpeed, percent: _percent),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: ElevatedButton(
-                        onPressed: getSpeedStats,
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color(SpeedMeter.mainRedColor),
-                            textStyle: const TextStyle(fontSize: 16)),
-                        child: Text(
-                          "start test".toUpperCase(),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: ElevatedButton(
-                        onPressed: getCustomSpeedStats,
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color(SpeedMeter.mainRedColor),
-                            textStyle: const TextStyle(fontSize: 16)),
-                        child: Text(
-                          "start custom test".toUpperCase(),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: ElevatedButton(
-                    onPressed: stopTest,
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(SpeedMeter.mainRedColor),
-                        textStyle: const TextStyle(fontSize: 16)),
-                    child: Text(
-                      "stop test".toUpperCase(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Container(
+                      margin: const EdgeInsets.symmetric(vertical: 20),
+                      child: Text(_status,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              color: Color(SpeedMeter.mainRedColor)))),
+                  Container(
+                    margin: const EdgeInsets.only(top: 20, bottom: 50),
+                    child: SpeedMeter(
+                        currentSpeed: _currentSpeed, percent: _percent),
                   ),
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  child: Text('Speed test results'.toUpperCase(),
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(SpeedMeter.blackTextColor))),
-                ),
-                Container(
-                  alignment: Alignment.topLeft,
-                  margin: const EdgeInsets.only(left: 50),
-                  child: Wrap(
-                    direction: Axis.vertical,
-                    spacing: 5,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Text(
-                        'Server: $_server',
-                        style: const TextStyle(fontSize: 16),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ElevatedButton(
+                          onPressed: getSpeedStats,
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color(SpeedMeter.mainRedColor),
+                              textStyle: const TextStyle(fontSize: 16)),
+                          child: Text(
+                            "start test".toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
-                      Text(
-                        'Ping: $_ping',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        'Download speed: ${_downloadSpeed.toStringAsFixed(2)} Mbps',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        'Upload speed: ${_uploadSpeed.toStringAsFixed(2)} Mbps',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        'Connection Type: $_connectionType',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        'User IP: $_ip',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        'User ISP: $_isp',
-                        style: const TextStyle(fontSize: 16),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ElevatedButton(
+                          onPressed: stopTest,
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color(SpeedMeter.mainRedColor),
+                              textStyle: const TextStyle(fontSize: 16)),
+                          child: Text(
+                            "stop test".toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                )
-              ],
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text('Speed test results'.toUpperCase(),
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(SpeedMeter.blackTextColor))),
+                  ),
+                  Container(
+                    alignment: Alignment.topLeft,
+                    margin: const EdgeInsets.only(left: 50),
+                    child: Wrap(
+                      direction: Axis.vertical,
+                      spacing: 5,
+                      children: [
+                        Text(
+                          'Ping: $_ping ms',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Download speed: ${_downloadSpeed.toStringAsFixed(2)} Mbps',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Upload speed: ${_uploadSpeed.toStringAsFixed(2)} Mbps',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Connection Type: $_connectionType',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'User ISP: $_isp',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Latitude : $lat',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Longitude : $long',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Time : $time',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Date : $date',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Day : $day',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Type of Day : $dayType',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Session : $session',
+                          style: const TextStyle(fontSize: 16),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
         ),
