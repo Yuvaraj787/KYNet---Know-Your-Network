@@ -1,7 +1,8 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:speed_checker_plugin/speed_checker_plugin.dart';
+import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -36,6 +37,8 @@ class _MyAppState extends State<MyApp> {
   String dayType = ''; // weekday or weekend
   String session =
       ''; // early morning or morning or afternoon or evening or night or midnight
+  String temparature = "";
+  String climate = "";
 
   void setTimeDetails() {
     DateTime now = DateTime.now();
@@ -114,6 +117,35 @@ class _MyAppState extends State<MyApp> {
       long = position.longitude.toString();
       lat = position.latitude.toString();
     });
+    await _getWeather();
+  }
+
+  Future<void> _getWeather() async {
+    const apiKey = 'cd908d976e0a1eed6e522b5af2bf5ab7';
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$long&appid=$apiKey&units=metric';
+
+    // Debug prints
+    print('Fetching weather for lat: $lat, lon: $long');
+    print('Request URL: $url');
+
+    final response = await http.get(Uri.parse(url));
+
+    // Debug prints
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      print(data);
+      setState(() {
+        temparature = data['main']['temp'].toString() ?? 'Unknown weather';
+      });
+    } else {
+      setState(() {
+        temparature = "error in finding temparature";
+      });
+    }
   }
 
   void getSpeedStats() {
@@ -287,6 +319,14 @@ class _MyAppState extends State<MyApp> {
                         ),
                         Text(
                           'Session : $session',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Temparature : $temparature',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Temparature : $temparature',
                           style: const TextStyle(fontSize: 16),
                         )
                       ],
