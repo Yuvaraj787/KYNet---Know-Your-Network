@@ -5,6 +5,7 @@ import 'package:speed_checker_plugin/speed_checker_plugin.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
@@ -20,9 +21,6 @@ class _MyAppState extends State<MyApp> {
   static const int bgColor = 0xFFE5E5E5;
 
   // Status and connection details
-  String _status = '';
-  String _server = '';
-  String _connType = '';
   String _ip = '';
   String _isp = '';
 
@@ -40,10 +38,6 @@ class _MyAppState extends State<MyApp> {
 
   // Speed test details
   int _ping = 0;
-  int _percent = 0;
-  double _curSpeed = 0;
-  double _downSpeed = 0;
-  double _upSpeed = 0;
 
   // Environment details
   String _envType = 'Crowded';
@@ -58,6 +52,8 @@ class _MyAppState extends State<MyApp> {
   final TextEditingController _locNameCtrl = TextEditingController();
   final SpeedCheckerPlugin _plugin = SpeedCheckerPlugin();
   late StreamSubscription<SpeedTestResult> _sub;
+
+  late StreamSubscription<SpeedTestResult> _subscription;
 
   void setTimeDetails() {
     DateTime now = DateTime.now();
@@ -132,17 +128,22 @@ class _MyAppState extends State<MyApp> {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
     if (res.statusCode == 200) {
       var data = json.decode(res.body);
-      var isp1 = data['isp'].contains("Jio")
+      var name = data['isp'].toLowerCase();
+      var isp1 = name.contains("jio")
           ? "Jio"
-          : data['isp'].contains("Airtel")
+          : name.contains("airtel")
               ? "Airtel"
-              : data['isp'].contains("Vodafone")
-                  ? "Vodafone"
-                  : data['isp'].contains("BSNL")
-                      ? "BSNL"
-                      : "Other";
+              : name.contains("bharti")
+                  ? "Airtel"
+                  : name.contains("vodafone")
+                      ? "Vodafone"
+                      : name.contains("bsnl")
+                          ? "BSNL"
+                          : "Other";
+
+      print("ISP ISP");
+      print(name);
       setState(() {
-        _ip = data['query'];
         _isp = isp1;
       });
     } else {
@@ -190,60 +191,90 @@ class _MyAppState extends State<MyApp> {
     final servers = settings.servers;
     final listServers = await _tester.getBestServers(servers: servers);
     setState(() {
-        _bestServersList = listServers;
+      _bestServersList = listServers;
     });
   }
 
-    Future<double> getDownloadSpeed() async {
-      print("called function");
-    if (_bestServersList.isEmpty) {
-      await initializeBestServers();
-    }
+  String _connectionType = '';
+  double _currentSpeed = 0;
+  double _downloadSpeed = 0;
+  double _uploadSpeed = 0;
 
-    try {
-      print("checking speed");
-      final downloadRate = await _tester.testDownloadSpeed(
-        servers: _bestServersList,
-      );
-      print("Download speed");
-      print(downloadRate);
+  void startTest() {
+    _plugin.startSpeedTest();
+    _subscription = _plugin.speedTestResultStream.listen((result) {
       setState(() {
-        _downSpeed = downloadRate;
+        _ping = result.ping;
+        _currentSpeed = result.currentSpeed;
+        _downloadSpeed = result.downloadSpeed;
+        _uploadSpeed = result.uploadSpeed;
+        _connectionType = result.connectionType;
+        _ip = result.ip;
+        if (result.error.isNotEmpty) {
+          Fluttertoast.showToast(msg: result.error.toString());
+        }
       });
-
-      return downloadRate; // returns speed in Mbps
-    } catch (e) {
-      print('Error getting download speed: $e');
-      return 0.0; // Return 0 or some default value in case of error
-    }
+    }, onDone: () {
+      _subscription.cancel();
+    }, onError: (error) {
+      _subscription.cancel();
+    });
   }
 
   void getSpeedStats() {
-    getDownloadSpeed();
     detectMovement();
     getLocation();
     setTimeDetails();
     getConnectionDetails();
   }
 
-  void stopTest() {
-    _plugin.stopTest();
-    _sub = _plugin.speedTestResultStream.listen((result) {
-      setState(() {
-        _status = "Speed test stopped";
-        _ping = 0;
-        _percent = 0;
-        _curSpeed = 0;
-        _downSpeed = 0;
-        _upSpeed = 0;
-        _server = '';
-        _connType = '';
-        _ip = '';
-        _isp = '';
-      });
-    }, onDone: () {
-      _sub.cancel();
-    });
+  List<List<String>> datas = [];
+
+  void addEntry() {
+    List<String> row = [
+      time,
+      lat,
+      long,
+      _downloadSpeed.toString(),
+      _uploadSpeed.toString(),
+      _ping.toString(),
+      _connectionType,
+      _isp,
+      day,
+      date,
+      dayType,
+      session,
+      temp,
+      climate,
+      _envType,
+      _locName,
+      _floor.toString(),
+      mobility
+    ];
+    datas.add(row);
+  }
+
+  void sendToServer() async {
+    // send this datas (2d array of strings) to http://74.225.246.68/add_data POST method
+    final url = Uri.parse('http://74.225.246.68/add_data');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({'data': datas});
+    print("collected data");
+    print(datas);
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        datas.clear();
+      } else {
+        print('Failed to send data: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      print('Error sending data: $e');
+    }
   }
 
   Padding tableCellPadding(String text) {
@@ -386,16 +417,16 @@ class _MyAppState extends State<MyApp> {
                         TableRow(children: [
                           tableCellPadding('Download speed:'),
                           tableCellPadding(
-                              '${_downSpeed.toStringAsFixed(2)} Mbps')
+                              '${_downloadSpeed.toStringAsFixed(2)} Mbps'),
                         ]),
                         TableRow(children: [
                           tableCellPadding('Upload speed:'),
                           tableCellPadding(
-                              '${_upSpeed.toStringAsFixed(2)} Mbps')
+                              '${_uploadSpeed.toStringAsFixed(2)} Mbps')
                         ]),
                         TableRow(children: [
                           tableCellPadding('Connection Type:'),
-                          tableCellPadding('$_connType')
+                          tableCellPadding('$_connectionType')
                         ]),
                         TableRow(children: [
                           tableCellPadding('User ISP:'),
@@ -431,7 +462,11 @@ class _MyAppState extends State<MyApp> {
                         ]),
                         TableRow(children: [
                           tableCellPadding('Temperature:'),
-                          tableCellPadding('$temp')
+                          tableCellPadding('$temp c')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('Climate'),
+                          tableCellPadding('$climate')
                         ]),
                         TableRow(children: [
                           tableCellPadding('Environment Type:'),
@@ -452,25 +487,237 @@ class _MyAppState extends State<MyApp> {
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ElevatedButton(
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 20, bottom: 20), // Increase the top gap here
+                    child: Wrap(
+                      spacing: 10, // Horizontal space between buttons
+                      runSpacing: 10, // Vertical space between rows of buttons
+                      alignment:
+                          WrapAlignment.center, // Center align the buttons
+                      children: [
+                        ElevatedButton(
                           onPressed: getSpeedStats,
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              textStyle: const TextStyle(fontSize: 16)),
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
                           child: Text("Fetch Data".toUpperCase(),
                               style: const TextStyle(color: Colors.white)),
                         ),
-                      ),
-                    ],
-                  ),
+                        ElevatedButton(
+                          onPressed: startTest,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Test Speed".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                        ElevatedButton(
+                          onPressed: addEntry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Add Entry".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                        ElevatedButton(
+                          onPressed: sendToServer,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Send Data ( ".toUpperCase() + datas.length.toString() + " rows in memory )",
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SpeedState extends State<MyApp> {
+  SpeedTestDart tester = SpeedTestDart();
+  List<Server> bestServersList = [];
+
+  double downloadRate = 0;
+  double uploadRate = 0;
+
+  bool readyToTest = false;
+  bool loadingDownload = false;
+  bool loadingUpload = false;
+  String status = "fetched servers";
+  String noOfServers = 'Not got';
+
+  Future<void> setBestServers() async {
+    final settings = await tester.getSettings();
+    final servers = settings.servers;
+
+    final _bestServersList = await tester.getBestServers(
+      servers: servers,
+    );
+
+    print("best serers ready");
+    print(_bestServersList.length);
+
+    setState(() {
+      status = "fetched";
+      noOfServers = _bestServersList.length.toString();
+      bestServersList = _bestServersList;
+      readyToTest = true;
+    });
+  }
+
+  Future<void> _testDownloadSpeed() async {
+    print("started");
+    setState(() {
+      loadingDownload = true;
+    });
+    final _downloadRate =
+        await tester.testDownloadSpeed(servers: [bestServersList[0]]);
+    setState(() {
+      downloadRate = _downloadRate;
+      loadingDownload = false;
+    });
+  }
+
+  Future<void> _testUploadSpeed() async {
+    setState(() {
+      loadingUpload = true;
+    });
+
+    final _uploadRate = await tester.testUploadSpeed(servers: bestServersList);
+
+    setState(() {
+      uploadRate = _uploadRate;
+      loadingUpload = false;
+    });
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setBestServers();
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Speed Test Example App'),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Download Test: $status and $noOfServers',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              if (loadingDownload)
+                Column(
+                  children: const [
+                    CircularProgressIndicator(),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Text('Testing download speed...'),
+                  ],
+                )
+              else
+                Text('Download rate  ${downloadRate.toStringAsFixed(2)} Mb/s'),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: loadingDownload
+                    ? null
+                    : () async {
+                        if (!readyToTest || bestServersList.isEmpty) return;
+                        await _testDownloadSpeed();
+                      },
+                child: const Text('Start'),
+              ),
+              const SizedBox(
+                height: 50,
+              ),
+              const Text(
+                'Upload Test:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              if (loadingUpload)
+                Column(
+                  children: const [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 10),
+                    Text('Testing upload speed...'),
+                  ],
+                )
+              else
+                Text('Upload rate ${uploadRate.toStringAsFixed(2)} Mb/s'),
+              const SizedBox(
+                height: 10,
+              ),
+              ElevatedButton(
+                onPressed: loadingUpload
+                    ? null
+                    : () async {
+                        if (!readyToTest || bestServersList.isEmpty) return;
+                        await _testUploadSpeed();
+                      },
+                child: const Text('Start'),
+              ),
+            ],
           ),
         ),
       ),
