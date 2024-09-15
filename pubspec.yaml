@@ -24,6 +24,8 @@ dependencies:
   syncfusion_flutter_gauges: ^26.2.14
   google_fonts: ^6.2.1
   fluttertoast: ^8.2.8
+  sensors_plus: ^6.0.1
+  get: ^4.6.6
 
 dev_dependencies:
   flutter_test:

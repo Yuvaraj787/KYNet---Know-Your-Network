@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:speed_checker_plugin/speed_checker_plugin.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,8 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -43,6 +46,8 @@ class _MyAppState extends State<MyApp> {
   String _locationName = '';
   String _environment = 'Indoor';
   int _floor = 0;
+  String temparature = '';
+  String mobility = 'Deteting device mobility...';
 
   final TextEditingController _locationNameController = TextEditingController();
 
@@ -155,32 +160,64 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void getSpeedStats() {
-    _plugin.startSpeedTest();
+  static const platform = MethodChannel('com.example.network/snr');
+
+  Future<double?> getSNR() async {
+    try {
+      final double? snr = await platform.invokeMethod('getSNR');
+      print("-----snr ");
+      print(snr);
+      return snr;
+    } on PlatformException catch (e) {
+      print("Failed to get SNR: '${e.message}'.");
+      return null;
+    }
+  }
+
+  void getSpeedStats() async {
+    // Duration d = new  Duration(seconds: 3);
+    // Stream<AccelerometerEvent> samples = accelerometerEventStream(samplingPeriod: d);
+    const double movementThreshold = 1.5; // Adjusted threshold for movement
+  const double gravity = 9.81; // Gravity constant
+  const int throttleDuration = 100; // Throttle duration in milliseconds (2 times per second)
+
+  StreamSubscription<AccelerometerEvent>? accelerometerSubscription;
+
+  String res = '';
+  Timer? throttleTimer;
+  accelerometerEvents.listen(
+      (AccelerometerEvent event) {
+        // Throttle the stream using a Timer
+        if (throttleTimer?.isActive ?? false) {
+          return; // Skip this event if throttle is active
+        }
+        
+        double magnitude = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+        double adjustedMagnitude = (magnitude - gravity).abs(); // Subtract gravity component
+
+        if (adjustedMagnitude > movementThreshold) {
+          print("MOVEMENT");
+          setState(() {
+            mobility = "MOVEMENT";
+          });
+        } else {
+          print("STATIC");
+          setState(() {
+            mobility = "STATIC";
+          });
+        }
+
+        // Start throttle timer
+        throttleTimer = Timer(Duration(milliseconds: throttleDuration), () {});
+      },
+      onError: (error) {
+        // Logic to handle error
+        print("Error in accelerometer meter: ${error.toString()}");
+      },
+    );
+    getSNR();
     getLocation();
     setTimeDetails();
-    _subscription = _plugin.speedTestResultStream.listen((result) {
-      setState(() {
-        _status = result.status;
-        _ping = result.ping;
-        _percent = result.percent;
-        _currentSpeed = result.currentSpeed;
-        _downloadSpeed = result.downloadSpeed;
-        _uploadSpeed = result.uploadSpeed;
-        _server = result.server;
-        _connectionType = result.connectionType;
-        _ip = result.ip;
-        _isp = result.isp;
-        if (result.error.isNotEmpty) {
-          Fluttertoast.showToast(msg: result.error.toString());
-        }
-      });
-    }, onDone: () {
-      _subscription.cancel();
-    }, onError: (error) {
-      _status = error.toString();
-      _subscription.cancel();
-    });
   }
 
   void stopTest() {
@@ -221,22 +258,30 @@ class _MyAppState extends State<MyApp> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  Container(
-                      margin: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(_status,
-                          style: const TextStyle(
-                              fontSize: 15,
-                              color: Color(SpeedMeter.mainRedColor)))),
-                  Container(
-                    margin: const EdgeInsets.only(top: 20, bottom: 50),
-                    child: SpeedMeter(
-                        currentSpeed: _currentSpeed, percent: _percent),
-                  ),
                   // Input fields for additional inputs
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          'Environment Type',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                         DropdownButton<String>(
                           value: _environmentType,
                           items:
@@ -252,16 +297,28 @@ class _MyAppState extends State<MyApp> {
                             });
                           },
                         ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Location Name',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                         TextField(
                           controller: _locationNameController,
                           decoration: const InputDecoration(
-                            labelText: 'Location Name',
+                            border: OutlineInputBorder(),
                           ),
                           onChanged: (value) {
                             setState(() {
                               _locationName = value;
                             });
                           },
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Environment',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         DropdownButton<String>(
                           value: _environment,
@@ -277,6 +334,12 @@ class _MyAppState extends State<MyApp> {
                               _environment = newValue!;
                             });
                           },
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Floor',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         DropdownButton<int>(
                           value: _floor,
@@ -296,39 +359,6 @@ class _MyAppState extends State<MyApp> {
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ElevatedButton(
-                          onPressed: getSpeedStats,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color(SpeedMeter.mainRedColor),
-                              textStyle: const TextStyle(fontSize: 16)),
-                          child: Text(
-                            "start test".toUpperCase(),
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ElevatedButton(
-                          onPressed: stopTest,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color(SpeedMeter.mainRedColor),
-                              textStyle: const TextStyle(fontSize: 16)),
-                          child: Text(
-                            "stop test".toUpperCase(),
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 10),
                     child: Text('Speed test results'.toUpperCase(),
@@ -344,6 +374,10 @@ class _MyAppState extends State<MyApp> {
                       direction: Axis.vertical,
                       spacing: 5,
                       children: [
+                        Text(
+                          'Mobility Status : $mobility',
+                          style: const TextStyle(fontSize: 16),
+                        ),
                         Text(
                           'Ping: $_ping ms',
                           style: const TextStyle(fontSize: 16),
@@ -396,10 +430,6 @@ class _MyAppState extends State<MyApp> {
                           'Temparature : $temparature',
                           style: const TextStyle(fontSize: 16),
                         ),
-                        Text(
-                          'Temparature : $temparature',
-                          style: const TextStyle(fontSize: 16),
-                        ),
                         // Display additional inputs
                         Text(
                           'Environment Type: $_environmentType',
@@ -419,7 +449,26 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ],
                     ),
-                  )
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        child: ElevatedButton(
+                          onPressed: getSpeedStats,
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color(SpeedMeter.mainRedColor),
+                              textStyle: const TextStyle(fontSize: 16)),
+                          child: Text(
+                            "Fetch Data".toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
