@@ -14,37 +14,23 @@ import 'package:speed_test_dart/speed_test_dart.dart';
 //Signal Strength
 import 'package:flutter_internet_signal/flutter_internet_signal.dart';
 
+//MethodChannel
+import 'package:flutter/services.dart';
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
-class PredictionScreen extends StatelessWidget {
+class DataCollection extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Prediction')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Prediction Screen'),
-            ElevatedButton(
-              onPressed: () {
-                // Handle prediction button click
-                print('Predict clicked');
-              },
-              child: Text('Predict'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  _DataCollectionState createState() => _DataCollectionState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _DataCollectionState extends State<DataCollection> {
+  // All the data collection functions and data go here
+  // ...
   static const int bgColor = 0xFFE5E5E5;
 
   // Status and connection details
@@ -77,6 +63,30 @@ class _MyAppState extends State<MyApp> {
   String climate = '';
   String contributor = '';
   String signal_strength = '';
+
+  //Strength Values
+  String gsmStrength = '';
+  String gsmData = '';
+  String rssi = '';
+  String asuLevel = '';
+  String level = '';
+  String gsm = '';
+  String cdmaDbm = '';
+  String cdmaEcio = '';
+  String evdoDbm = '';
+  String evdoEcio = '';
+  String ecdoSnr = '';
+  String cdmaLevel = '';
+  String evdoLevel = '';
+  String cdma = '';
+  String lteStrength = '';
+  String lteData = '';
+  String rsrp = '';
+  String rsrq = '';
+  String rssnr = '';
+  String cqi = '';
+  String cqiTableIndex = '';
+  String lte = '';
 
   final TextEditingController _locNameCtrl = TextEditingController();
   final SpeedCheckerPlugin _plugin = SpeedCheckerPlugin();
@@ -123,6 +133,73 @@ class _MyAppState extends State<MyApp> {
     _plugin.dispose();
     _locNameCtrl.dispose();
     super.dispose();
+  }
+
+  static const platform = MethodChannel('com.example.methodchannel');
+
+  Future<void> getStrength() async {
+    var data = await platform.invokeMethod("messageFunction");
+    print("got");
+    print(data);
+    print("Strength");
+    print(data["lte"]);
+
+    if (data["gsm"] != null) {
+      var gsmData = data["gsm"];
+      gsmStrength = gsmData["strength"].toString();
+      rssi = gsmData["rssi"].toString();
+      asuLevel = gsmData["asuLevel"].toString();
+      level = gsmData["level"].toString();
+      print("GSM Data:");
+      print("Strength: $gsmStrength");
+      print("Rssi: $rssi");
+      print("Asu Level: $asuLevel");
+      print("Level: $level");
+    }
+
+    if (data["cdma"] != null) {
+      var cdmaData = data["cdma"];
+      cdmaDbm = cdmaData["dbm"].toString();
+      cdmaEcio = cdmaData["ecio"].toString();
+      evdoDbm = cdmaData["evdoDbm"].toString();
+      evdoEcio = cdmaData["evdoEcio"].toString();
+      ecdoSnr = cdmaData["ecdoSnr"].toString();
+      cdmaLevel = cdmaData["level"].toString();
+      evdoLevel = cdmaData["evdoLevel"].toString();
+      asuLevel = cdmaData["asuLevel"].toString();
+      cdma = cdmaData["cdma"].toString();
+      print("CDMA Data:");
+      print("Dbm: $cdmaDbm");
+      print("Ecio: $cdmaEcio");
+      print("Evdo Dbm: $evdoDbm");
+      print("Evdo Ecio: $evdoEcio");
+      print("Ecdo Snr: $ecdoSnr");
+      print("Level: $cdmaLevel");
+      print("Evdo Level: $evdoLevel");
+      print("Asu Level: $asuLevel");
+      print("Type: $cdma");
+    }
+
+    if (data["lte"] != null) {
+      var lteData = data["lte"];
+      lteStrength = lteData["strength"].toString();
+      rsrp = lteData["rsrp"].toString();
+      rsrq = lteData["rsrq"].toString();
+      rssnr = lteData["rssnr"].toString();
+      level = lteData["level"].toString();
+      cqi = lteData["cqi"].toString();
+      cqiTableIndex = lteData["cqiTableIndex"].toString();
+      lte = lteData["lte"].toString();
+      print("LTE Data:");
+      print("Strength: $lteStrength");
+      print("Rsrp: $rsrp");
+      print("Rsrq: $rsrq");
+      print("Rssnr: $rssnr");
+      print("Level: $level");
+      print("Cqi: $cqi");
+      print("Cqi Table Index: $cqiTableIndex");
+      print("Type: $lte");
+    }
   }
 
   Future<void> getLocation() async {
@@ -265,12 +342,14 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void getSpeedStats() {
+  Future<void> getSpeedStats() async {
     SignalStrength();
     detectMovement();
     getLocation();
     setTimeDetails();
     getConnectionDetails();
+    _getWeather();
+    getStrength();
   }
 
   List<List<String>> datas = [];
@@ -294,13 +373,37 @@ class _MyAppState extends State<MyApp> {
       _envType,
       _locName,
       _floor.toString(),
-      mobility
+      mobility,
+      gsmStrength,
+      gsmData,
+      rssi,
+      asuLevel,
+      level,
+      gsm,
+      cdmaDbm,
+      cdmaEcio,
+      evdoDbm,
+      evdoEcio,
+      ecdoSnr,
+      cdmaLevel,
+      evdoLevel,
+      level,
+      asuLevel,
+      cdma,
+      lteStrength,
+      lteData,
+      rsrp,
+      rsrq,
+      rssnr,
+      level,
+      cqi,
+      cqiTableIndex,
+      lte,
     ];
     datas.add(row);
   }
 
   void sendToServer() async {
-    // send this datas (2d array of strings) to http://74.225.246.68/add_data POST method
     final url = Uri.parse('http://74.225.246.68/add_data');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': datas});
@@ -549,6 +652,90 @@ class _MyAppState extends State<MyApp> {
                           tableCellPadding('Contributor Name:'),
                           tableCellPadding('$contributor')
                         ]),
+                        TableRow(children: [
+                          tableCellPadding('1G GsmStrength:'),
+                          tableCellPadding('$gsmStrength')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('1G GsmData:'),
+                          tableCellPadding('$gsmData')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('1G rssi:'),
+                          tableCellPadding('$rssi')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('1G AsuLevel'),
+                          tableCellPadding('$asuLevel')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('1G level'),
+                          tableCellPadding('$level')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('1G GSM:'),
+                          tableCellPadding('$gsm')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G cdmaDbm:'),
+                          tableCellPadding('$cdmaDbm')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G cdmaEcio'),
+                          tableCellPadding('$cdmaEcio')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G evdoDbm:'),
+                          tableCellPadding('$evdoDbm')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G evdoEcio:'),
+                          tableCellPadding('$evdoEcio')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G ecdoSnr:'),
+                          tableCellPadding('$ecdoSnr')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G cdmaLevel:'),
+                          tableCellPadding('$cdmaLevel')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G level'),
+                          tableCellPadding('$level')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G asuLevel:'),
+                          tableCellPadding('$asuLevel')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('2G cdma:'),
+                          tableCellPadding('$cdma')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G rsrp:'),
+                          tableCellPadding('$rsrp')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G rsrq:'),
+                          tableCellPadding('$rsrq')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G rssnr:'),
+                          tableCellPadding('$rssnr')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G level:'),
+                          tableCellPadding('$level')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G cqi:'),
+                          tableCellPadding('$cqi')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('3G cqiTableIndex:'),
+                          tableCellPadding('$cqiTableIndex')
+                        ]),
                       ],
                     ),
                   ),
@@ -636,7 +823,831 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class LocationBasedPrediction extends StatefulWidget {
+  @override
+  _LocationBasedPredictionState createState() =>
+      _LocationBasedPredictionState();
+}
+
+class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
+  final _dataCollection = _DataCollectionState();
+  String _locName = '';
+  String _isp = '';
+  String _long = '';
+  String _lat = '';
+  String _temp = '';
+  String _climate = '';
+
+  Future<void> getConnectionDetails() async {
+    final res = await http.get(Uri.parse('http://ip-api.com/json'));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      var name = data['isp'].toLowerCase();
+      var isp1 = name.contains("jio")
+          ? "Jio"
+          : name.contains("airtel")
+              ? "Airtel"
+              : name.contains("bharti")
+                  ? "Airtel"
+                  : name.contains("vodafone")
+                      ? "Vodafone"
+                      : name.contains("bsnl")
+                          ? "BSNL"
+                          : "Other";
+
+      setState(() {
+        _isp = isp1;
+      });
+    } else {
+      setState(() {
+        _isp = 'Unknown';
+      });
+    }
+  }
+
+  Future<void> getLocation() async {
+    Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      _long = pos.longitude.toString();
+      _lat = pos.latitude.toString();
+    });
+    await _getWeather();
+  }
+
+  Future<void> _getWeather() async {
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      setState(() {
+        _temp = data['main']['temp'].toString() ?? 'Unknown weather';
+        _climate = data['weather'][0]['description'] ?? 'Unknown climate';
+      });
+    } else {
+      setState(() {
+        _temp = "Error in finding temperature";
+        _climate = "Error in finding climate";
+      });
+    }
+  }
+
+  void showDataInTable(BuildContext context,
+      _DataCollectionState dataCollection, String location) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Data Table'),
+          content: SizedBox(
+            height: 500, // Set the height to make the table scrollable
+            child: SingleChildScrollView(
+              child: DataTable(
+                columns: [
+                  DataColumn(label: Text('Property')),
+                  DataColumn(label: Text('Value')),
+                ],
+                rows: [
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Mobility Status')),
+                      DataCell(Text('${dataCollection.mobility}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Movement Speed')),
+                      DataCell(Text('${dataCollection.velocity}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Signal Strength')),
+                      DataCell(Text('${dataCollection.signal_strength}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('User ISP')),
+                      DataCell(Text(_isp)), // Changed to isp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Latitude')),
+                      DataCell(Text(_lat)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Longitude')),
+                      DataCell(Text(_long)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Time')),
+                      DataCell(Text('${dataCollection.time}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Date')),
+                      DataCell(Text('${dataCollection.date}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Day')),
+                      DataCell(Text('${dataCollection.day}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Type of Day')),
+                      DataCell(Text('${dataCollection.dayType}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Session')),
+                      DataCell(Text('${dataCollection.session}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Temperature')),
+                      DataCell(Text(_temp)), // Changed to temp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Climate')),
+                      DataCell(Text(_climate)), // Changed to climate
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Location')),
+                      DataCell(Text(location)), // Added User Entered Location
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Location Based Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Location Based Prediction Screen'),
+            SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Enter location',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _locName = value;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                await _dataCollection.getSpeedStats();
+                await getConnectionDetails();
+                await getLocation();
+                showDataInTable(context, _dataCollection, _locName);
+              },
+              child: Text('Fetch Data'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                // Handle predict using decision tree button click
+                print('Predict using Decision Tree button clicked');
+                // TODO: implement predict using decision tree logic
+              },
+              child: Text('Predict using Random Forest'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TimeBasedPrediction extends StatefulWidget {
+  @override
+  _TimeBasedPredictionState createState() => _TimeBasedPredictionState();
+}
+
+class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
+  final _dataCollection = _DataCollectionState();
+  String _locName = '';
+  String _isp = '';
+  String _long = '';
+  String _lat = '';
+  String _temp = '';
+  String _climate = '';
+  String _time = '';
+
+  Future<void> getConnectionDetails() async {
+    final res = await http.get(Uri.parse('http://ip-api.com/json'));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      var name = data['isp'].toLowerCase();
+      var isp1 = name.contains("jio")
+          ? "Jio"
+          : name.contains("airtel")
+              ? "Airtel"
+              : name.contains("bharti")
+                  ? "Airtel"
+                  : name.contains("vodafone")
+                      ? "Vodafone"
+                      : name.contains("bsnl")
+                          ? "BSNL"
+                          : "Other";
+
+      setState(() {
+        _isp = isp1;
+      });
+    } else {
+      setState(() {
+        _isp = 'Unknown';
+      });
+    }
+  }
+
+  Future<void> getLocation() async {
+    Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      _long = pos.longitude.toString();
+      _lat = pos.latitude.toString();
+    });
+    await _getWeather();
+  }
+
+  Future<void> _getWeather() async {
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      setState(() {
+        _temp = data['main']['temp'].toString() ?? 'Unknown weather';
+        _climate = data['weather'][0]['description'] ?? 'Unknown climate';
+      });
+    } else {
+      setState(() {
+        _temp = "Error in finding temperature";
+        _climate = "Error in finding climate";
+      });
+    }
+  }
+
+  void showDataInTable(
+      BuildContext context, _DataCollectionState dataCollection) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Data Table'),
+          content: SizedBox(
+            height: 500, // Set the height to make the table scrollable
+            child: SingleChildScrollView(
+              child: DataTable(
+                columns: [
+                  DataColumn(label: Text('Property')),
+                  DataColumn(label: Text('Value')),
+                ],
+                rows: [
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Mobility Status')),
+                      DataCell(Text('${dataCollection.mobility}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Movement Speed')),
+                      DataCell(Text('${dataCollection.velocity}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Signal Strength')),
+                      DataCell(Text('${dataCollection.signal_strength}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('User ISP')),
+                      DataCell(Text(_isp)), // Changed to isp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Latitude')),
+                      DataCell(Text(_lat)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Longitude')),
+                      DataCell(Text(_long)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Time')),
+                      DataCell(Text('${_time}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Date')),
+                      DataCell(Text('${dataCollection.date}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Day')),
+                      DataCell(Text('${dataCollection.day}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Type of Day')),
+                      DataCell(Text('${dataCollection.dayType}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Session')),
+                      DataCell(Text('${dataCollection.session}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Temperature')),
+                      DataCell(Text(_temp)), // Changed to temp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Climate')),
+                      DataCell(Text(_climate)), // Changed to climate
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Time Based Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Time Based Prediction Screen'),
+            SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Enter time',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _time = value;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                await _dataCollection.getSpeedStats();
+                await getConnectionDetails();
+                await _getWeather();
+                await getLocation();
+                showDataInTable(context, _dataCollection);
+              },
+              child: Text('Fetch Data'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                // Handle predict using decision tree button click
+                print('Predict using Decision Tree button clicked');
+                // TODO: implement predict using decision tree logic
+              },
+              child: Text('Predict using Decision Tree'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TimeLocationPrediction extends StatefulWidget {
+  @override
+  _TimeLocationPredictionState createState() => _TimeLocationPredictionState();
+}
+
+class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
+  final _dataCollection = _DataCollectionState();
+  String _locName = '';
+  String _isp = '';
+  String _long = '';
+  String _lat = '';
+  String _temp = '';
+  String _climate = '';
+  String _time = '';
+
+  Future<void> getConnectionDetails() async {
+    final res = await http.get(Uri.parse('http://ip-api.com/json'));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      var name = data['isp'].toLowerCase();
+      var isp1 = name.contains("jio")
+          ? "Jio"
+          : name.contains("airtel")
+              ? "Airtel"
+              : name.contains("bharti")
+                  ? "Airtel"
+                  : name.contains("vodafone")
+                      ? "Vodafone"
+                      : name.contains("bsnl")
+                          ? "BSNL"
+                          : "Other";
+
+      setState(() {
+        _isp = isp1;
+      });
+    } else {
+      setState(() {
+        _isp = 'Unknown';
+      });
+    }
+  }
+
+  Future<void> getLocation() async {
+    Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      _long = pos.longitude.toString();
+      _lat = pos.latitude.toString();
+    });
+    await _getWeather();
+  }
+
+  Future<void> _getWeather() async {
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      setState(() {
+        _temp = data['main']['temp'].toString() ?? 'Unknown weather';
+        _climate = data['weather'][0]['description'] ?? 'Unknown climate';
+      });
+    } else {
+      setState(() {
+        _temp = "Error in finding temperature";
+        _climate = "Error in finding climate";
+      });
+    }
+  }
+
+  void showDataInTable(
+      BuildContext context, _DataCollectionState dataCollection) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Data Table'),
+          content: SizedBox(
+            height: 500, // Set the height to make the table scrollable
+            child: SingleChildScrollView(
+              child: DataTable(
+                columns: [
+                  DataColumn(label: Text('Property')),
+                  DataColumn(label: Text('Value')),
+                ],
+                rows: [
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Mobility Status')),
+                      DataCell(Text('${dataCollection.mobility}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Movement Speed')),
+                      DataCell(Text('${dataCollection.velocity}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Signal Strength')),
+                      DataCell(Text('${dataCollection.signal_strength}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('User ISP')),
+                      DataCell(Text(_isp)), // Changed to isp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Latitude')),
+                      DataCell(Text(_lat)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Longitude')),
+                      DataCell(Text(_long)),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Time')),
+                      DataCell(Text('${_time}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Date')),
+                      DataCell(Text('${dataCollection.date}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Day')),
+                      DataCell(Text('${dataCollection.day}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Type of Day')),
+                      DataCell(Text('${dataCollection.dayType}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Session')),
+                      DataCell(Text('${dataCollection.session}')),
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Temperature')),
+                      DataCell(Text(_temp)), // Changed to temp
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Climate')),
+                      DataCell(Text(_climate)), // Changed to climate
+                    ],
+                  ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Location')),
+                      DataCell(Text(_locName)), // Added User Entered Location
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Time and Location Based Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Time and Location Based Prediction Screen'),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Enter location',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _locName = value;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(),
+              ),
+              child: TextField(
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Enter time',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _time = value;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                await _dataCollection.getSpeedStats();
+                await getConnectionDetails();
+                await getLocation();
+                showDataInTable(context, _dataCollection);
+              },
+              child: Text('Fetch Data'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                // Handle predict using decision tree button click
+                print('Predict using Decision Tree button clicked');
+                // TODO: implement predict using decision tree logic
+              },
+              child: Text('Predict using Gradient Boosting'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PredictionScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    print("PredictionScreen Clicked");
+    return Scaffold(
+      appBar: AppBar(title: Text('Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Prediction Screen',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey,
+              ),
+            ),
+            SizedBox(height: 50),
+            Wrap(
+              alignment: WrapAlignment.center, // align buttons to the center
+              spacing: 20, // add some spacing between buttons
+              runSpacing: 20, // add some spacing between rows
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120, 120),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    // Handle location based prediction button click
+                    print('Location Based Prediction clicked');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => LocationBasedPrediction()),
+                    );
+                  },
+                  child: Text('Location Based Prediction'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120, 120),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    // Handle time based prediction button click
+                    print('Time Based Prediction clicked');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => TimeBasedPrediction()),
+                    );
+                  },
+                  child: Text('Time Based Prediction'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120, 120),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    // Handle both location and time based prediction button click
+                    print('Both Location and Time Based Prediction clicked');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => TimeLocationPrediction()),
+                    );
+                  },
+                  child: Text('Both Location and Time Based Prediction'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MyAppState extends State<MyApp> {
+  int _currentIndex = 0;
+
+  final List<Widget> _children = [
+    DataCollection(),
+    PredictionScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'KYNet',
+      home: Scaffold(
+        body: _children[_currentIndex],
         bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onItemTapped,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.data_usage),
@@ -647,20 +1658,6 @@ class _MyAppState extends State<MyApp> {
               label: 'Prediction',
             ),
           ],
-          onTap: (int index) {
-            switch (index) {
-              case 0:
-                print("Data Collection Clicked");
-                break;
-              case 1:
-                print("Prediction Clicked");
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PredictionScreen()),
-                );
-                break;
-            }
-          },
         ),
       ),
     );
