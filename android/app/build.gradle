@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 31
     namespace = "com.example.kynet"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

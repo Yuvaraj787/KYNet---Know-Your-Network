@@ -110,6 +110,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_internet_signal:
+    dependency: "direct main"
+    description:
+      name: flutter_internet_signal
+      sha256: b4b7c2792c70fd1150cb342fe4ae44076c4e02e2ed0ed6667b40431f68a23dcd
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.30"
   flutter_lints:
     dependency: "direct dev"
     description:
