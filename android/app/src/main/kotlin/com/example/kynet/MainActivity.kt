@@ -94,7 +94,13 @@ class MainActivity: FlutterActivity() {
         } else {
           print("summ")
         }
+<<<<<<< HEAD
      
     }
   }
 }
+=======
+    }
+  }
+}
+>>>>>>> fa9cfbc4a8d64223eaf4f8d6ea49057c0f4132c0
