@@ -9,10 +9,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
+import 'package:flutter/services.dart';
 import 'package:speed_test_dart/speed_test_dart.dart';
 
-//Signal Strength
-import 'package:flutter_internet_signal/flutter_internet_signal.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -183,20 +182,6 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void SignalStrength() async {
-    final FlutterInternetSignal internetSignal = FlutterInternetSignal();
-    final int? mobileSignal = await internetSignal.getMobileSignalStrength();
-    final int? wifiSignal = await internetSignal.getWifiSignalStrength();
-    print('Result dBm mobile : ');
-    print(mobileSignal);
-    print('Result dBm wifi : ');
-    print(wifiSignal);
-    signal_strength = mobileSignal != null
-        ? mobileSignal.toStringAsFixed(2)
-        : wifiSignal != null
-            ? wifiSignal.toStringAsFixed(2)
-            : 'Unknown';
-  }
 
   void detectMovement() {
     Geolocator.getPositionStream().listen((position) {
@@ -244,6 +229,14 @@ class _MyAppState extends State<MyApp> {
   double _downloadSpeed = 0;
   double _uploadSpeed = 0;
 
+  static const platform = MethodChannel('com.example.methodchannel');
+
+  void getStrength() async {
+    var data = await platform.invokeMethod("messageFunction");
+    print("got");
+    print(data);
+  }
+
   void startTest() {
     _plugin.startSpeedTest();
     _subscription = _plugin.speedTestResultStream.listen((result) {
@@ -266,11 +259,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   void getSpeedStats() {
-    SignalStrength();
-    detectMovement();
-    getLocation();
-    setTimeDetails();
-    getConnectionDetails();
+    getStrength();
+    // detectMovement();
+    // getLocation();
+    // setTimeDetails();
+    // getConnectionDetails();
   }
 
   List<List<String>> datas = [];
