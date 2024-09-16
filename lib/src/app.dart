@@ -11,10 +11,37 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:speed_test_dart/classes/server.dart';
 import 'package:speed_test_dart/speed_test_dart.dart';
 
+//Signal Strength
+import 'package:flutter_internet_signal/flutter_internet_signal.dart';
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
   State<MyApp> createState() => _MyAppState();
+}
+
+class PredictionScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Prediction Screen'),
+            ElevatedButton(
+              onPressed: () {
+                // Handle prediction button click
+                print('Predict clicked');
+              },
+              child: Text('Predict'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MyAppState extends State<MyApp> {
@@ -48,6 +75,8 @@ class _MyAppState extends State<MyApp> {
   String mobility = 'Not Detected';
   String velocity = '0.0';
   String climate = '';
+  String contributor = '';
+  String signal_strength = '';
 
   final TextEditingController _locNameCtrl = TextEditingController();
   final SpeedCheckerPlugin _plugin = SpeedCheckerPlugin();
@@ -154,6 +183,21 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  void SignalStrength() async {
+    final FlutterInternetSignal internetSignal = FlutterInternetSignal();
+    final int? mobileSignal = await internetSignal.getMobileSignalStrength();
+    final int? wifiSignal = await internetSignal.getWifiSignalStrength();
+    print('Result dBm mobile : ');
+    print(mobileSignal);
+    print('Result dBm wifi : ');
+    print(wifiSignal);
+    signal_strength = mobileSignal != null
+        ? mobileSignal.toStringAsFixed(2)
+        : wifiSignal != null
+            ? wifiSignal.toStringAsFixed(2)
+            : 'Unknown';
+  }
+
   void detectMovement() {
     Geolocator.getPositionStream().listen((position) {
       double speedMps = position.speed; // This is your speed
@@ -222,6 +266,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void getSpeedStats() {
+    SignalStrength();
     detectMovement();
     getLocation();
     setTimeDetails();
@@ -271,7 +316,6 @@ class _MyAppState extends State<MyApp> {
       } else {
         print('Failed to send data: ${response.statusCode}');
       }
-
     } catch (e) {
       print('Error sending data: $e');
     }
@@ -379,6 +423,19 @@ class _MyAppState extends State<MyApp> {
                             });
                           },
                         ),
+                        SizedBox(height: 20),
+                        Text('Contributor Name',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        TextField(
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder()),
+                          onChanged: (value) {
+                            setState(() {
+                              contributor = value;
+                            });
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -423,6 +480,10 @@ class _MyAppState extends State<MyApp> {
                           tableCellPadding('Upload speed:'),
                           tableCellPadding(
                               '${_uploadSpeed.toStringAsFixed(2)} Mbps')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('Signal Strength:'),
+                          tableCellPadding('$signal_strength dBm')
                         ]),
                         TableRow(children: [
                           tableCellPadding('Connection Type:'),
@@ -483,6 +544,10 @@ class _MyAppState extends State<MyApp> {
                         TableRow(children: [
                           tableCellPadding('Floor:'),
                           tableCellPadding('$_floor')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('Contributor Name:'),
+                          tableCellPadding('$contributor')
                         ]),
                       ],
                     ),
@@ -557,7 +622,10 @@ class _MyAppState extends State<MyApp> {
                             ),
                             elevation: 5,
                           ),
-                          child: Text("Send Data ( ".toUpperCase() + datas.length.toString() + " rows in memory )",
+                          child: Text(
+                              "Send Data ( ".toUpperCase() +
+                                  datas.length.toString() +
+                                  " rows in memory )",
                               style: const TextStyle(color: Colors.white)),
                         ),
                       ],
@@ -567,6 +635,32 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
           ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.data_usage),
+              label: 'Data Collection',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'Prediction',
+            ),
+          ],
+          onTap: (int index) {
+            switch (index) {
+              case 0:
+                print("Data Collection Clicked");
+                break;
+              case 1:
+                print("Prediction Clicked");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PredictionScreen()),
+                );
+                break;
+            }
+          },
         ),
       ),
     );
