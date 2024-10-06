@@ -6,12 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:collection/collection.dart';
 
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
 import 'package:flutter/services.dart';
 import 'package:speed_test_dart/speed_test_dart.dart';
-
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -25,30 +25,23 @@ class DataCollection extends StatefulWidget {
 }
 
 class _DataCollectionState extends State<DataCollection> {
-  // All the data collection functions and data go here
-  // ...
   static const int bgColor = 0xFFE5E5E5;
 
-  // Status and connection details
   String _ip = '';
   String _isp = '';
 
-  // Location details
   String lat = '';
   String long = '';
 
-  // Date and time details
-  String date = ''; // dd-mm-yyyy
-  String time = ''; // hh:mm
-  String day = ''; // Monday to Sunday
-  String dayType = ''; // Weekday or Weekend
+  String date = ''; 
+  String time = ''; 
+  String day = ''; 
+  String dayType = ''; 
   String session =
-      ''; // Early morning, morning, afternoon, evening, night, or midnight
+      ''; 
 
-  // Speed test details
   int _ping = 0;
 
-  // Environment details
   String _envType = 'Crowded';
   String _locName = '';
   String _env = 'Indoor';
@@ -60,29 +53,28 @@ class _DataCollectionState extends State<DataCollection> {
   String contributor = '';
   String signal_strength = '';
 
-  //Strength Values
-  String gsmStrength = '';
-  String gsmData = '';
-  String rssi = '';
-  String asuLevel = '';
-  String level = '';
-  String gsm = '';
-  String cdmaDbm = '';
-  String cdmaEcio = '';
-  String evdoDbm = '';
-  String evdoEcio = '';
-  String ecdoSnr = '';
-  String cdmaLevel = '';
-  String evdoLevel = '';
-  String cdma = '';
-  String lteStrength = '';
-  String lteData = '';
-  String rsrp = '';
-  String rsrq = '';
-  String rssnr = '';
-  String cqi = '';
-  String cqiTableIndex = '';
-  String lte = '';
+  var gsmStrength;
+  var gsmData;
+  var rssi;
+  var asuLevel;
+  var level;
+  var gsm;
+  var cdmaDbm;
+  var cdmaEcio;
+  var evdoDbm;
+  var evdoEcio;
+  var ecdoSnr;
+  var cdmaLevel;
+  var evdoLevel;
+  var cdma;
+  var lteStrength;
+  var lteData;
+  var rsrp;
+  var rsrq;
+  var rssnr;
+  var cqi;
+  var cqiTableIndex;
+  var lte;
 
   final TextEditingController _locNameCtrl = TextEditingController();
   final SpeedCheckerPlugin _plugin = SpeedCheckerPlugin();
@@ -132,7 +124,23 @@ class _DataCollectionState extends State<DataCollection> {
   }
 
   static const platform = MethodChannel('com.example.methodchannel');
-
+  var nr_csicqi,
+      nr_csicqiti,
+      nr_csirsrp,
+      nr_csisinr,
+      nr_dbm,
+      nr_rsrq,
+      nr_rsrp,
+      nr_sssinr,
+      nr_csirsrq,
+      nr_timing;
+  var asu_level,
+      gsm_band,
+      cdma_band,
+      lte_band,
+      nr_band,
+      gsm_asuLevel,
+      cdma_asuLevel;
   Future<void> getStrength() async {
     var data = await platform.invokeMethod("messageFunction");
     print("got");
@@ -141,29 +149,32 @@ class _DataCollectionState extends State<DataCollection> {
     print(data["lte"]);
 
     if (data["gsm"] != null) {
+      _connectionType = '2G';
       var gsmData = data["gsm"];
       gsmStrength = gsmData["strength"].toString();
+      signal_strength = gsmStrength;
       rssi = gsmData["rssi"].toString();
-      asuLevel = gsmData["asuLevel"].toString();
+      gsm_asuLevel = gsmData["asuLevel"].toString();
       level = gsmData["level"].toString();
       print("GSM Data:");
       print("Strength: $gsmStrength");
       print("Rssi: $rssi");
-      print("Asu Level: $asuLevel");
+      print("Asu Level: $gsm_asuLevel");
       print("Level: $level");
     }
 
     if (data["cdma"] != null) {
+      _connectionType = '3G';
       var cdmaData = data["cdma"];
       cdmaDbm = cdmaData["dbm"].toString();
+      signal_strength = cdmaDbm;
       cdmaEcio = cdmaData["ecio"].toString();
       evdoDbm = cdmaData["evdoDbm"].toString();
       evdoEcio = cdmaData["evdoEcio"].toString();
       ecdoSnr = cdmaData["ecdoSnr"].toString();
       cdmaLevel = cdmaData["level"].toString();
       evdoLevel = cdmaData["evdoLevel"].toString();
-      asuLevel = cdmaData["asuLevel"].toString();
-      cdma = cdmaData["cdma"].toString();
+      cdma_asuLevel = cdmaData["asuLevel"].toString();
       print("CDMA Data:");
       print("Dbm: $cdmaDbm");
       print("Ecio: $cdmaEcio");
@@ -172,20 +183,22 @@ class _DataCollectionState extends State<DataCollection> {
       print("Ecdo Snr: $ecdoSnr");
       print("Level: $cdmaLevel");
       print("Evdo Level: $evdoLevel");
-      print("Asu Level: $asuLevel");
-      print("Type: $cdma");
+      print("Asu Level: $cdma_asuLevel");
     }
 
     if (data["lte"] != null) {
+      _connectionType = '4G';
       var lteData = data["lte"];
       lteStrength = lteData["strength"].toString();
       rsrp = lteData["rsrp"].toString();
+      signal_strength = rsrp;
       rsrq = lteData["rsrq"].toString();
       rssnr = lteData["rssnr"].toString();
       level = lteData["level"].toString();
+      asu_level = lteData["asuLevel"].toString();
       cqi = lteData["cqi"].toString();
       cqiTableIndex = lteData["cqiTableIndex"].toString();
-      lte = lteData["lte"].toString();
+      lte_band = lteData["bands"].toString();
       print("LTE Data:");
       print("Strength: $lteStrength");
       print("Rsrp: $rsrp");
@@ -194,7 +207,23 @@ class _DataCollectionState extends State<DataCollection> {
       print("Level: $level");
       print("Cqi: $cqi");
       print("Cqi Table Index: $cqiTableIndex");
-      print("Type: $lte");
+    }
+
+    if (data["nr"] != null) {
+      _connectionType = '5G';
+      var nrData = data["nr"];
+      nr_rsrp = nrData["ssRsrp"];
+      signal_strength = nr_rsrp;
+      nr_rsrq = nrData["ssRsrq"];
+      nr_sssinr = nrData["ssSinr"];
+      nr_dbm = nrData["dbm"];
+      nr_csirsrp = nrData["csiRsrp"];
+      nr_csirsrq = nrData["csiRsrq"];
+      nr_csisinr = nrData["csiSinr"];
+      nr_csicqi = nrData["csiCqiReport"];
+      nr_csicqiti = nrData["csiCqiTableIndex"];
+      nr_timing = nrData["timingAdvanceMicros"];
+      nr_band = nrData["bands"].toString();
     }
   }
 
@@ -256,12 +285,10 @@ class _DataCollectionState extends State<DataCollection> {
     }
   }
 
-
   void detectMovement() {
     Geolocator.getPositionStream().listen((position) {
-      double speedMps = position.speed; // This is your speed
+      double speedMps = position.speed; 
       String category = '';
-      // Categorize speed based on common thresholds
       if (speedMps < 0.2) {
         category = "No movement";
       } else if (speedMps < 0.7) {
@@ -279,20 +306,20 @@ class _DataCollectionState extends State<DataCollection> {
         velocity = speedMps.toStringAsFixed(2);
       });
 
-      // Do something with the category (e.g., update UI, log data)
       print("Category: $category");
     });
   }
 
-// experimental
 
   final SpeedTestDart _tester = SpeedTestDart();
   List<Server> _bestServersList = [];
 
   Future<void> initializeBestServers() async {
+    
     final settings = await _tester.getSettings();
     final servers = settings.servers;
     final listServers = await _tester.getBestServers(servers: servers);
+
     setState(() {
       _bestServersList = listServers;
     });
@@ -303,15 +330,8 @@ class _DataCollectionState extends State<DataCollection> {
   double _downloadSpeed = 0;
   double _uploadSpeed = 0;
 
-  static const platform = MethodChannel('com.example.methodchannel');
-
-  void getStrength() async {
-    var data = await platform.invokeMethod("messageFunction");
-    print("got");
-    print(data);
-  }
-
   void startTest() {
+    stopTimer();
     _plugin.startSpeedTest();
     _subscription = _plugin.speedTestResultStream.listen((result) {
       setState(() {
@@ -326,6 +346,7 @@ class _DataCollectionState extends State<DataCollection> {
         }
       });
     }, onDone: () {
+      startTimer();
       _subscription.cancel();
     }, onError: (error) {
       _subscription.cancel();
@@ -333,19 +354,22 @@ class _DataCollectionState extends State<DataCollection> {
   }
 
   Future<void> getSpeedStats() async {
-    SignalStrength();
     detectMovement();
-    getLocation();
+    await getLocation();
     setTimeDetails();
-    getConnectionDetails();
-    _getWeather();
-    getStrength();
+    await getConnectionDetails();
+    await _getWeather();
+    await getStrength();
+
+    addEntry();
   }
 
-  List<List<String>> datas = [];
+  List<List<dynamic>> datas = [];
+
+  List<dynamic> last_inserted = [];
 
   void addEntry() {
-    List<String> row = [
+    List<dynamic> row = [
       time,
       lat,
       long,
@@ -364,33 +388,37 @@ class _DataCollectionState extends State<DataCollection> {
       _locName,
       _floor.toString(),
       mobility,
+      velocity,
       gsmStrength,
-      gsmData,
+      gsm_asuLevel,
       rssi,
-      asuLevel,
-      level,
-      gsm,
       cdmaDbm,
       cdmaEcio,
       evdoDbm,
       evdoEcio,
       ecdoSnr,
-      cdmaLevel,
-      evdoLevel,
-      level,
-      asuLevel,
-      cdma,
-      lteStrength,
-      lteData,
+      cdma_asuLevel,
+      cdma_band,
       rsrp,
       rsrq,
       rssnr,
-      level,
       cqi,
-      cqiTableIndex,
-      lte,
+      lte_band,
+      nr_dbm,
+      nr_rsrp,
+      nr_rsrq,
+      nr_sssinr,
+      nr_csicqi,
+      nr_csirsrp,
+      nr_csirsrq,
+      nr_band,
+      nr_timing,
+      contributor
     ];
-    datas.add(row);
+    if (!const ListEquality().equals(row, last_inserted)) {
+      datas.add(row);
+      last_inserted = row;
+    }
   }
 
   void sendToServer() async {
@@ -419,6 +447,29 @@ class _DataCollectionState extends State<DataCollection> {
       padding: const EdgeInsets.all(8.0),
       child: Text(text, style: const TextStyle(fontSize: 16)),
     );
+  }
+
+  Timer? _timer;
+
+  Timer? _fiveTimer;
+
+  void startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 2), (Timer timer) {
+        getSpeedStats();
+    });
+  }
+
+
+  void stopTimer() {
+     _timer?.cancel();  
+  }
+
+  void startProcess() {
+    startTimer();
+  }
+
+  void stopProcess() {
+    stopTimer();
   }
 
   @override
@@ -452,77 +503,150 @@ class _DataCollectionState extends State<DataCollection> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Environment Type',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        DropdownButton<String>(
-                          value: _envType,
-                          items:
-                              <String>['Crowded', 'Free'].map((String value) {
-                            return DropdownMenuItem<String>(
-                                value: value, child: Text(value));
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _envType = newValue!;
-                            });
-                          },
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Environment Type',
+                                    style: TextStyle(
+                                      fontSize:
+                                          14, // Slightly reduced font size
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  DropdownButton<String>(
+                                    value: _envType,
+                                    items: <String>[
+                                      'Crowded',
+                                      'Moderate',
+                                      'Free'
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _envType = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Location Name',
+                                    style: TextStyle(
+                                      fontSize:
+                                          14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextField(
+                                    controller: _locNameCtrl,
+                                    decoration: InputDecoration(
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _locName = value;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: 20),
-                        Text('Location Name',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Environment',
+                                    style: TextStyle(
+                                      fontSize:
+                                          14, 
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  DropdownButton<String>(
+                                    value: _env,
+                                    items: <String>['Indoor', 'Outdoor']
+                                        .map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _env = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 10), 
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Floor',
+                                    style: TextStyle(
+                                      fontSize:
+                                          14, 
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  DropdownButton<int>(
+                                    value: _floor,
+                                    items: List.generate(5, (index) => index)
+                                        .map((int value) {
+                                      return DropdownMenuItem<int>(
+                                        value: value,
+                                        child: Text(value.toString()),
+                                      );
+                                    }).toList(),
+                                    onChanged: (int? newValue) {
+                                      setState(() {
+                                        _floor = newValue!;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Contributor Name',
+                          style: TextStyle(
+                            fontSize: 14, 
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         TextField(
-                          controller: _locNameCtrl,
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder()),
-                          onChanged: (value) {
-                            setState(() {
-                              _locName = value;
-                            });
-                          },
-                        ),
-                        SizedBox(height: 20),
-                        Text('Environment',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        DropdownButton<String>(
-                          value: _env,
-                          items:
-                              <String>['Indoor', 'Outdoor'].map((String value) {
-                            return DropdownMenuItem<String>(
-                                value: value, child: Text(value));
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _env = newValue!;
-                            });
-                          },
-                        ),
-                        SizedBox(height: 20),
-                        Text('Floor',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        DropdownButton<int>(
-                          value: _floor,
-                          items: List.generate(5, (index) => index)
-                              .map((int value) {
-                            return DropdownMenuItem<int>(
-                                value: value, child: Text(value.toString()));
-                          }).toList(),
-                          onChanged: (int? newValue) {
-                            setState(() {
-                              _floor = newValue!;
-                            });
-                          },
-                        ),
-                        SizedBox(height: 20),
-                        Text('Contributor Name',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        TextField(
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder()),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
                           onChanged: (value) {
                             setState(() {
                               contributor = value;
@@ -534,7 +658,7 @@ class _DataCollectionState extends State<DataCollection> {
                   ),
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text('Speed test results'.toUpperCase(),
+                    child: Text('Data Fetched'.toUpperCase(),
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -643,88 +767,124 @@ class _DataCollectionState extends State<DataCollection> {
                           tableCellPadding('$contributor')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G GsmStrength:'),
+                          tableCellPadding('( 2G ) GsmStrength:'),
                           tableCellPadding('$gsmStrength')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G GsmData:'),
+                          tableCellPadding('( 2G ) GsmData:'),
                           tableCellPadding('$gsmData')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G rssi:'),
+                          tableCellPadding('( 2G ) rssi:'),
                           tableCellPadding('$rssi')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G AsuLevel'),
-                          tableCellPadding('$asuLevel')
+                          tableCellPadding('( 2G ) AsuLevel'),
+                          tableCellPadding('$gsm_asuLevel')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G level'),
+                          tableCellPadding('( 2G ) level'),
                           tableCellPadding('$level')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('1G GSM:'),
-                          tableCellPadding('$gsm')
+                          tableCellPadding('( 2G ) band:'),
+                          tableCellPadding('$gsm_band')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G cdmaDbm:'),
+                          tableCellPadding('( 3G ) cdmaDbm:'),
                           tableCellPadding('$cdmaDbm')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G cdmaEcio'),
+                          tableCellPadding('( 3G ) cdmaEcio'),
                           tableCellPadding('$cdmaEcio')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G evdoDbm:'),
+                          tableCellPadding('( 3G ) evdoDbm:'),
                           tableCellPadding('$evdoDbm')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G evdoEcio:'),
+                          tableCellPadding('( 3G ) evdoEcio:'),
                           tableCellPadding('$evdoEcio')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G ecdoSnr:'),
+                          tableCellPadding('( 3G ) ecdoSnr:'),
                           tableCellPadding('$ecdoSnr')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G cdmaLevel:'),
+                          tableCellPadding('( 3G ) cdmaLevel:'),
                           tableCellPadding('$cdmaLevel')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G level'),
-                          tableCellPadding('$level')
+                          tableCellPadding('( 3G ) asuLevel:'),
+                          tableCellPadding('$cdma_asuLevel')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G asuLevel:'),
-                          tableCellPadding('$asuLevel')
+                          tableCellPadding('( 3G ) band:'),
+                          tableCellPadding('$cdma_band')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('2G cdma:'),
-                          tableCellPadding('$cdma')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('3G rsrp:'),
+                          tableCellPadding('( 4G ) rsrp:'),
                           tableCellPadding('$rsrp')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('3G rsrq:'),
+                          tableCellPadding('( 4G ) rsrq:'),
                           tableCellPadding('$rsrq')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('3G rssnr:'),
+                          tableCellPadding('( 4G ) rssnr:'),
                           tableCellPadding('$rssnr')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('3G level:'),
-                          tableCellPadding('$level')
+                          tableCellPadding('( 4G ) asuLevel:'),
+                          tableCellPadding('$asu_level')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('3G cqi:'),
+                          tableCellPadding('( 4G ) cqi:'),
                           tableCellPadding('$cqi')
                         ]),
                         TableRow(children: [
-                          tableCellPadding('3G cqiTableIndex:'),
-                          tableCellPadding('$cqiTableIndex')
+                          tableCellPadding('( 4G ) band:'),
+                          tableCellPadding('$lte_band')
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) rsrp:'),
+                          tableCellPadding('$nr_rsrp'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) rsrq:'),
+                          tableCellPadding('$nr_rsrq'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) ssinr:'),
+                          tableCellPadding('$nr_sssinr'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) dbm:'),
+                          tableCellPadding('$nr_dbm'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) csi_rsrp:'),
+                          tableCellPadding('$nr_csirsrp'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) csi_rsrq:'),
+                          tableCellPadding('$nr_csirsrq'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) csi_sinr:'),
+                          tableCellPadding('$nr_csisinr'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) csi_cqi_report:'),
+                          tableCellPadding('$nr_csicqi'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) timing_advance_micros:'),
+                          tableCellPadding('$nr_timing'),
+                        ]),
+                        TableRow(children: [
+                          tableCellPadding('( 5G ) band:'),
+                          tableCellPadding('$nr_band')
                         ]),
                       ],
                     ),
@@ -803,6 +963,40 @@ class _DataCollectionState extends State<DataCollection> {
                               "Send Data ( ".toUpperCase() +
                                   datas.length.toString() +
                                   " rows in memory )",
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                        ElevatedButton(
+                          onPressed: startProcess,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text(
+                              "Start Fetching Automatically",
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                         ElevatedButton(
+                          onPressed: stopProcess,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text(
+                              "Stop Fetching",
                               style: const TextStyle(color: Colors.white)),
                         ),
                       ],
@@ -896,7 +1090,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, // Set the height to make the table scrollable
+            height: 500, 
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -925,7 +1119,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), // Changed to isp
+                      DataCell(Text(_isp)), 
                     ],
                   ),
                   DataRow(
@@ -979,13 +1173,13 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)), // Changed to climate
+                      DataCell(Text(_climate)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Location')),
-                      DataCell(Text(location)), // Added User Entered Location
+                      DataCell(Text(location)), 
                     ],
                   ),
                 ],
@@ -1127,7 +1321,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, // Set the height to make the table scrollable
+            height: 500, 
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -1156,7 +1350,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), // Changed to isp
+                      DataCell(Text(_isp)), 
                     ],
                   ),
                   DataRow(
@@ -1204,13 +1398,13 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)), // Changed to temp
+                      DataCell(Text(_temp)), 
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)), // Changed to climate
+                      DataCell(Text(_climate)), 
                     ],
                   ),
                 ],
@@ -1262,9 +1456,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                // Handle predict using decision tree button click
                 print('Predict using Decision Tree button clicked');
-                // TODO: implement predict using decision tree logic
               },
               child: Text('Predict using Decision Tree'),
             ),
@@ -1353,7 +1545,7 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, // Set the height to make the table scrollable
+            height: 500, 
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -1382,7 +1574,7 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), // Changed to isp
+                      DataCell(Text(_isp)), 
                     ],
                   ),
                   DataRow(
@@ -1430,19 +1622,19 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)), // Changed to temp
+                      DataCell(Text(_temp)), 
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)), // Changed to climate
+                      DataCell(Text(_climate)), 
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Location')),
-                      DataCell(Text(_locName)), // Added User Entered Location
+                      DataCell(Text(_locName)), 
                     ],
                   ),
                 ],
@@ -1509,9 +1701,7 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                // Handle predict using decision tree button click
                 print('Predict using Decision Tree button clicked');
-                // TODO: implement predict using decision tree logic
               },
               child: Text('Predict using Gradient Boosting'),
             ),
@@ -1542,9 +1732,9 @@ class PredictionScreen extends StatelessWidget {
             ),
             SizedBox(height: 50),
             Wrap(
-              alignment: WrapAlignment.center, // align buttons to the center
-              spacing: 20, // add some spacing between buttons
-              runSpacing: 20, // add some spacing between rows
+              alignment: WrapAlignment.center, 
+              spacing: 20, 
+              runSpacing: 20, 
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -1556,7 +1746,6 @@ class PredictionScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    // Handle location based prediction button click
                     print('Location Based Prediction clicked');
                     Navigator.push(
                       context,
@@ -1576,7 +1765,6 @@ class PredictionScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    // Handle time based prediction button click
                     print('Time Based Prediction clicked');
                     Navigator.push(
                       context,
@@ -1596,7 +1784,6 @@ class PredictionScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    // Handle both location and time based prediction button click
                     print('Both Location and Time Based Prediction clicked');
                     Navigator.push(
                       context,
@@ -1648,158 +1835,6 @@ class _MyAppState extends State<MyApp> {
               label: 'Prediction',
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SpeedState extends State<MyApp> {
-  SpeedTestDart tester = SpeedTestDart();
-  List<Server> bestServersList = [];
-
-  double downloadRate = 0;
-  double uploadRate = 0;
-
-  bool readyToTest = false;
-  bool loadingDownload = false;
-  bool loadingUpload = false;
-  String status = "fetched servers";
-  String noOfServers = 'Not got';
-
-  Future<void> setBestServers() async {
-    final settings = await tester.getSettings();
-    final servers = settings.servers;
-
-    final _bestServersList = await tester.getBestServers(
-      servers: servers,
-    );
-
-    print("best serers ready");
-    print(_bestServersList.length);
-
-    setState(() {
-      status = "fetched";
-      noOfServers = _bestServersList.length.toString();
-      bestServersList = _bestServersList;
-      readyToTest = true;
-    });
-  }
-
-  Future<void> _testDownloadSpeed() async {
-    print("started");
-    setState(() {
-      loadingDownload = true;
-    });
-    final _downloadRate =
-        await tester.testDownloadSpeed(servers: [bestServersList[0]]);
-    setState(() {
-      downloadRate = _downloadRate;
-      loadingDownload = false;
-    });
-  }
-
-  Future<void> _testUploadSpeed() async {
-    setState(() {
-      loadingUpload = true;
-    });
-
-    final _uploadRate = await tester.testUploadSpeed(servers: bestServersList);
-
-    setState(() {
-      uploadRate = _uploadRate;
-      loadingUpload = false;
-    });
-  }
-
-  @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setBestServers();
-    });
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Speed Test Example App'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Download Test: $status and $noOfServers',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              if (loadingDownload)
-                Column(
-                  children: const [
-                    CircularProgressIndicator(),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text('Testing download speed...'),
-                  ],
-                )
-              else
-                Text('Download rate  ${downloadRate.toStringAsFixed(2)} Mb/s'),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: loadingDownload
-                    ? null
-                    : () async {
-                        if (!readyToTest || bestServersList.isEmpty) return;
-                        await _testDownloadSpeed();
-                      },
-                child: const Text('Start'),
-              ),
-              const SizedBox(
-                height: 50,
-              ),
-              const Text(
-                'Upload Test:',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              if (loadingUpload)
-                Column(
-                  children: const [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 10),
-                    Text('Testing upload speed...'),
-                  ],
-                )
-              else
-                Text('Upload rate ${uploadRate.toStringAsFixed(2)} Mb/s'),
-              const SizedBox(
-                height: 10,
-              ),
-              ElevatedButton(
-                onPressed: loadingUpload
-                    ? null
-                    : () async {
-                        if (!readyToTest || bestServersList.isEmpty) return;
-                        await _testUploadSpeed();
-                      },
-                child: const Text('Start'),
-              ),
-            ],
-          ),
         ),
       ),
     );

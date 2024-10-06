@@ -34,6 +34,7 @@ class MainActivity: FlutterActivity() {
                     is CellInfoGsm -> {
                         val gsmStrength: CellSignalStrengthGsm = cellInfo.cellSignalStrength
                         val gsmData = mutableMapOf<String, Any>()
+                        val cellIdentity: CellIdentityGsm = cellInfo.cellIdentity
                         gsmData["rssi"] = gsmStrength.dbm
                         gsmData["asuLevel"] = gsmStrength.asuLevel
                         gsmData["level"] = gsmStrength.level
@@ -42,6 +43,7 @@ class MainActivity: FlutterActivity() {
                     is CellInfoCdma -> {
                         val cdmaStrength: CellSignalStrengthCdma = cellInfo.cellSignalStrength
                         val cdmaData = mutableMapOf<String, Any>()
+                        val cellIdentity: CellIdentityCdma = cellInfo.cellIdentity
                         cdmaData["cdmaDbm"] = cdmaStrength.cdmaDbm
                         cdmaData["cdmaEcio"] = cdmaStrength.cdmaEcio
                         cdmaData["evdoDbm"] = cdmaStrength.evdoDbm
@@ -55,32 +57,37 @@ class MainActivity: FlutterActivity() {
                     }
                     is CellInfoLte -> {
                         val lteStrength: CellSignalStrengthLte = cellInfo.cellSignalStrength
+                        val cellIdentity: CellIdentityLte = cellInfo.cellIdentity
                         val lteData = mutableMapOf<String, Any>()
                         lteData["rsrp"] = lteStrength.dbm
+                        lteData["bands"] = cellIdentity.getBands()[0];
                         lteData["rsrq"] = lteStrength.rsrq
                         lteData["rssnr"] = lteStrength.rssnr
+                        lteData["asuLevel"] = lteStrength.getAsuLevel();
                         lteData["level"] = lteStrength.level
                         lteData["cqi"] = lteStrength.cqi
                         lteData["cqiTableIndex"] = lteStrength.cqiTableIndex
                         signalInfoMap["lte"] = lteData
                     }
-                    // is CellInfoNr -> {
-                    //   val nrStrength: CellSignalStrengthNr = cellInfo.cellSignalStrength
-                    //   val nrData = mutableMapOf<String, Any>()
+                    is CellInfoNr -> {
+                      val nrStrength: CellSignalStrengthNr =  cellInfo.cellSignalStrength as CellSignalStrengthNr;
+                      val nrData = mutableMapOf<String, Any>()
+                      val cellIdentity: CellIdentityNr = cellInfo.cellIdentity as CellIdentityNr
                       
-                    //   nrData["ssRsrp"] = nrStrength.ssRsrp
-                    //   nrData["ssRsrq"] = nrStrength.ssRsrq
-                    //   nrData["ssSinr"] = nrStrength.ssSinr
-                    //   nrData["dbm"] = nrStrength.dbm
-                    //   nrData["level"] = nrStrength.level
-                    //   nrData["csiRsrp"] = nrStrength.getCsiRsrp()
-                    //   nrData["csiRsrq"] = nrStrength.getCsiRsrq()
-                    //   nrData["csiSinr"] = nrStrength.getCsiSinr()
-                    //   nrData["csiCqiReport"] = nrStrength.getCsiCqiReport()
-                    //   nrData["csiCqiTableIndex"] = nrStrength.getCsiCqiTableIndex()
-                    //   nrData["timingAdvanceMicros"] = nrStrength.getTimingAdvanceMicros()
-                    //   signalInfoMap["nr"] = nrData
-                    // }
+                      nrData["ssRsrp"] = nrStrength.ssRsrp
+                      nrData["ssRsrq"] = nrStrength.ssRsrq
+                      nrData["ssSinr"] = nrStrength.ssSinr
+                      nrData["dbm"] = nrStrength.dbm
+                      nrData["level"] = nrStrength.level
+                      nrData["csiRsrp"] = nrStrength.getCsiRsrp()
+                      nrData["csiRsrq"] = nrStrength.getCsiRsrq()
+                      nrData["csiSinr"] = nrStrength.getCsiSinr()
+                      nrData["csiCqiReport"] = nrStrength.getCsiCqiReport()
+                      nrData["csiCqiTableIndex"] = nrStrength.getCsiCqiTableIndex()
+                      nrData["timingAdvanceMicros"] = nrStrength.getTimingAdvanceMicros()
+                      nrData["bands"] = cellIdentity.getBands()[0];
+                      signalInfoMap["nr"] = nrData
+                    }
                 }
             }
 
@@ -94,13 +101,7 @@ class MainActivity: FlutterActivity() {
         } else {
           print("summ")
         }
-<<<<<<< HEAD
      
     }
   }
 }
-=======
-    }
-  }
-}
->>>>>>> fa9cfbc4a8d64223eaf4f8d6ea49057c0f4132c0
