@@ -33,12 +33,11 @@ class _DataCollectionState extends State<DataCollection> {
   String lat = '';
   String long = '';
 
-  String date = ''; 
-  String time = ''; 
-  String day = ''; 
-  String dayType = ''; 
-  String session =
-      ''; 
+  String date = '';
+  String time = '';
+  String day = '';
+  String dayType = '';
+  String session = '';
 
   int _ping = 0;
 
@@ -287,7 +286,7 @@ class _DataCollectionState extends State<DataCollection> {
 
   void detectMovement() {
     Geolocator.getPositionStream().listen((position) {
-      double speedMps = position.speed; 
+      double speedMps = position.speed;
       String category = '';
       if (speedMps < 0.2) {
         category = "No movement";
@@ -310,12 +309,10 @@ class _DataCollectionState extends State<DataCollection> {
     });
   }
 
-
   final SpeedTestDart _tester = SpeedTestDart();
   List<Server> _bestServersList = [];
 
   Future<void> initializeBestServers() async {
-    
     final settings = await _tester.getSettings();
     final servers = settings.servers;
     final listServers = await _tester.getBestServers(servers: servers);
@@ -329,6 +326,16 @@ class _DataCollectionState extends State<DataCollection> {
   double _currentSpeed = 0;
   double _downloadSpeed = 0;
   double _uploadSpeed = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    startAutomaticProcess();
+  }
+
+  void startAutomaticProcess() {
+    startTest();
+  }
 
   void startTest() {
     stopTimer();
@@ -345,12 +352,19 @@ class _DataCollectionState extends State<DataCollection> {
           Fluttertoast.showToast(msg: result.error.toString());
         }
       });
+      getSpeedStatsAndSendDataAndRepeat();
     }, onDone: () {
       startTimer();
       _subscription.cancel();
     }, onError: (error) {
       _subscription.cancel();
     });
+  }
+
+  void getSpeedStatsAndSendDataAndRepeat() async {
+    await getSpeedStats();
+    sendToServer();
+    startTest();
   }
 
   Future<void> getSpeedStats() async {
@@ -455,13 +469,12 @@ class _DataCollectionState extends State<DataCollection> {
 
   void startTimer() {
     _timer = Timer.periodic(Duration(seconds: 2), (Timer timer) {
-        getSpeedStats();
+      getSpeedStats();
     });
   }
 
-
   void stopTimer() {
-     _timer?.cancel();  
+    _timer?.cancel();
   }
 
   void startProcess() {
@@ -547,8 +560,7 @@ class _DataCollectionState extends State<DataCollection> {
                                   Text(
                                     'Location Name',
                                     style: TextStyle(
-                                      fontSize:
-                                          14,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -579,8 +591,7 @@ class _DataCollectionState extends State<DataCollection> {
                                   Text(
                                     'Environment',
                                     style: TextStyle(
-                                      fontSize:
-                                          14, 
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -602,7 +613,7 @@ class _DataCollectionState extends State<DataCollection> {
                                 ],
                               ),
                             ),
-                            SizedBox(width: 10), 
+                            SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,8 +621,7 @@ class _DataCollectionState extends State<DataCollection> {
                                   Text(
                                     'Floor',
                                     style: TextStyle(
-                                      fontSize:
-                                          14, 
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -639,7 +649,7 @@ class _DataCollectionState extends State<DataCollection> {
                         Text(
                           'Contributor Name',
                           style: TextStyle(
-                            fontSize: 14, 
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -889,119 +899,117 @@ class _DataCollectionState extends State<DataCollection> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 20, bottom: 20), // Increase the top gap here
-                    child: Wrap(
-                      spacing: 10, // Horizontal space between buttons
-                      runSpacing: 10, // Vertical space between rows of buttons
-                      alignment:
-                          WrapAlignment.center, // Center align the buttons
-                      children: [
-                        ElevatedButton(
-                          onPressed: getSpeedStats,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text("Fetch Data".toUpperCase(),
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                        ElevatedButton(
-                          onPressed: startTest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text("Test Speed".toUpperCase(),
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                        ElevatedButton(
-                          onPressed: addEntry,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text("Add Entry".toUpperCase(),
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                        ElevatedButton(
-                          onPressed: sendToServer,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text(
-                              "Send Data ( ".toUpperCase() +
-                                  datas.length.toString() +
-                                  " rows in memory )",
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                        ElevatedButton(
-                          onPressed: startProcess,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text(
-                              "Start Fetching Automatically",
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                         ElevatedButton(
-                          onPressed: stopProcess,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            textStyle: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 5,
-                          ),
-                          child: Text(
-                              "Stop Fetching",
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                      ],
-                    ),
-                  )
+                  // Padding(
+                  //   padding: const EdgeInsets.only(
+                  //       top: 20, bottom: 20), // Increase the top gap here
+                  //   child: Wrap(
+                  //     spacing: 10, // Horizontal space between buttons
+                  //     runSpacing: 10, // Vertical space between rows of buttons
+                  //     alignment:
+                  //         WrapAlignment.center, // Center align the buttons
+                  //     children: [
+                  //       ElevatedButton(
+                  //         onPressed: getSpeedStats,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text("Fetch Data".toUpperCase(),
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //       ElevatedButton(
+                  //         onPressed: startTest,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text("Test Speed".toUpperCase(),
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //       ElevatedButton(
+                  //         onPressed: addEntry,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text("Add Entry".toUpperCase(),
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //       ElevatedButton(
+                  //         onPressed: sendToServer,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text(
+                  //             "Send Data ( ".toUpperCase() +
+                  //                 datas.length.toString() +
+                  //                 " rows in memory )",
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //       ElevatedButton(
+                  //         onPressed: startProcess,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text("Start Fetching Automatically",
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //       ElevatedButton(
+                  //         onPressed: stopProcess,
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor: Colors.red,
+                  //           textStyle: const TextStyle(
+                  //               fontSize: 16, fontWeight: FontWeight.bold),
+                  //           padding: const EdgeInsets.symmetric(
+                  //               horizontal: 20, vertical: 15),
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(10),
+                  //           ),
+                  //           elevation: 5,
+                  //         ),
+                  //         child: Text("Stop Fetching",
+                  //             style: const TextStyle(color: Colors.white)),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // )
                 ],
               ),
             ),
@@ -1090,7 +1098,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, 
+            height: 500,
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -1119,7 +1127,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), 
+                      DataCell(Text(_isp)),
                     ],
                   ),
                   DataRow(
@@ -1179,7 +1187,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Location')),
-                      DataCell(Text(location)), 
+                      DataCell(Text(location)),
                     ],
                   ),
                 ],
@@ -1321,7 +1329,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, 
+            height: 500,
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -1350,7 +1358,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), 
+                      DataCell(Text(_isp)),
                     ],
                   ),
                   DataRow(
@@ -1398,13 +1406,13 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)), 
+                      DataCell(Text(_temp)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)), 
+                      DataCell(Text(_climate)),
                     ],
                   ),
                 ],
@@ -1545,7 +1553,7 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
         return AlertDialog(
           title: Text('Data Table'),
           content: SizedBox(
-            height: 500, 
+            height: 500,
             child: SingleChildScrollView(
               child: DataTable(
                 columns: [
@@ -1574,7 +1582,7 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)), 
+                      DataCell(Text(_isp)),
                     ],
                   ),
                   DataRow(
@@ -1622,19 +1630,19 @@ class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)), 
+                      DataCell(Text(_temp)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)), 
+                      DataCell(Text(_climate)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Location')),
-                      DataCell(Text(_locName)), 
+                      DataCell(Text(_locName)),
                     ],
                   ),
                 ],
@@ -1732,9 +1740,9 @@ class PredictionScreen extends StatelessWidget {
             ),
             SizedBox(height: 50),
             Wrap(
-              alignment: WrapAlignment.center, 
-              spacing: 20, 
-              runSpacing: 20, 
+              alignment: WrapAlignment.center,
+              spacing: 20,
+              runSpacing: 20,
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
