@@ -330,19 +330,19 @@ class _DataCollectionState extends State<DataCollection> {
   @override
   void initState() {
     super.initState();
-    startAutomaticProcess();
   }
 
-  void startAutomaticProcess() {
-    startTest();
-  }
+  // void startAutomaticProcess() {
+  //   startTest();
+  // }
 
   bool _isCollectingData = false;
 
   void startDataCollection() {
     if (!_isCollectingData) {
       _isCollectingData = true;
-      startAutomaticProcess();
+      startTest();
+      startTimer();
     }
   }
 
@@ -350,6 +350,7 @@ class _DataCollectionState extends State<DataCollection> {
     if (_isCollectingData) {
       _isCollectingData = false;
       stopProcess();
+      stopTimer();
     }
   }
 
@@ -1152,12 +1153,12 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Location Based Prediction')),
+      appBar: AppBar(title: const Text('Use Current Location')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Location Based Prediction Screen'),
+            Text('Current location network prediction'),
             SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
