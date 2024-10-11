@@ -337,6 +337,22 @@ class _DataCollectionState extends State<DataCollection> {
     startTest();
   }
 
+  bool _isCollectingData = false;
+
+  void startDataCollection() {
+    if (!_isCollectingData) {
+      _isCollectingData = true;
+      startAutomaticProcess();
+    }
+  }
+
+  void stopDataCollection() {
+    if (_isCollectingData) {
+      _isCollectingData = false;
+      stopProcess();
+    }
+  }
+
   void startTest() {
     stopTimer();
     _plugin.startSpeedTest();
@@ -427,7 +443,8 @@ class _DataCollectionState extends State<DataCollection> {
       nr_csirsrq,
       nr_band,
       nr_timing,
-      contributor
+      contributor,
+      _env,
     ];
     if (!const ListEquality().equals(row, last_inserted)) {
       datas.add(row);
@@ -899,117 +916,50 @@ class _DataCollectionState extends State<DataCollection> {
                       ],
                     ),
                   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.only(
-                  //       top: 20, bottom: 20), // Increase the top gap here
-                  //   child: Wrap(
-                  //     spacing: 10, // Horizontal space between buttons
-                  //     runSpacing: 10, // Vertical space between rows of buttons
-                  //     alignment:
-                  //         WrapAlignment.center, // Center align the buttons
-                  //     children: [
-                  //       ElevatedButton(
-                  //         onPressed: getSpeedStats,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text("Fetch Data".toUpperCase(),
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //       ElevatedButton(
-                  //         onPressed: startTest,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text("Test Speed".toUpperCase(),
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //       ElevatedButton(
-                  //         onPressed: addEntry,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text("Add Entry".toUpperCase(),
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //       ElevatedButton(
-                  //         onPressed: sendToServer,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text(
-                  //             "Send Data ( ".toUpperCase() +
-                  //                 datas.length.toString() +
-                  //                 " rows in memory )",
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //       ElevatedButton(
-                  //         onPressed: startProcess,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text("Start Fetching Automatically",
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //       ElevatedButton(
-                  //         onPressed: stopProcess,
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor: Colors.red,
-                  //           textStyle: const TextStyle(
-                  //               fontSize: 16, fontWeight: FontWeight.bold),
-                  //           padding: const EdgeInsets.symmetric(
-                  //               horizontal: 20, vertical: 15),
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(10),
-                  //           ),
-                  //           elevation: 5,
-                  //         ),
-                  //         child: Text("Stop Fetching",
-                  //             style: const TextStyle(color: Colors.white)),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // )
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 20, bottom: 20), // Increase the top gap here
+                    child: Wrap(
+                      spacing: 10, // Horizontal space between buttons
+                      runSpacing: 10, // Vertical space between rows of buttons
+                      alignment:
+                          WrapAlignment.center, // Center align the buttons
+                      children: [
+                        ElevatedButton(
+                          onPressed: startDataCollection,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Start Data Collection".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                        ElevatedButton(
+                          onPressed: stopDataCollection,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Stop Data Collection".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
