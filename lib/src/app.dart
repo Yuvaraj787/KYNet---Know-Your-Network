@@ -447,7 +447,8 @@ class _DataCollectionState extends State<DataCollection> {
       contributor,
       _env,
     ];
-    if (!const ListEquality().equals(row, last_inserted)) {
+    final listEquality = ListEquality();
+    if (!(ListEquality().equals(row, last_inserted))) {
       datas.add(row);
       last_inserted = row;
     }
@@ -971,15 +972,278 @@ class _DataCollectionState extends State<DataCollection> {
   }
 }
 
-class LocationBasedPrediction extends StatefulWidget {
-  @override
-  _LocationBasedPredictionState createState() =>
-      _LocationBasedPredictionState();
+class ListEquality<T> {
+  bool equals(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 }
 
-class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
+class CustomDropdownButton<T> extends StatefulWidget {
+  final List<T> items;
+  final T? value;
+  final void Function(T?) onChanged;
+
+  const CustomDropdownButton({
+    Key? key,
+    required this.items,
+    this.value,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  _CustomDropdownButtonState<T> createState() =>
+      _CustomDropdownButtonState<T>();
+}
+
+class _CustomDropdownButtonState<T> extends State<CustomDropdownButton<T>> {
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<T>(
+      value: widget.value,
+      items: widget.items.map((T value) {
+        return DropdownMenuItem<T>(
+          value: value,
+          child: Text(value.toString()),
+        );
+      }).toList(),
+      onChanged: widget.onChanged,
+    );
+  }
+} // ignore: must_be_immutable
+
+class CustomTextField extends StatefulWidget {
+  final String? initialValue;
+  final void Function(String) onChanged;
+
+  const CustomTextField({
+    Key? key,
+    this.initialValue,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  _CustomTextFieldState createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(),
+      ),
+      onChanged: widget.onChanged,
+    );
+  }
+} // ignore: must_be_immutable
+
+class CustomDropdownButtonFormField<T> extends StatefulWidget {
+  final List<T> items;
+  final T? initialValue;
+  final void Function(T?) onChanged;
+
+  const CustomDropdownButtonFormField({
+    Key? key,
+    required this.items,
+    this.initialValue,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  _CustomDropdownButtonFormFieldState<T> createState() =>
+      _CustomDropdownButtonFormFieldState<T>();
+}
+
+class _CustomDropdownButtonFormFieldState<T>
+    extends State<CustomDropdownButtonFormField<T>> {
+  late T? _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      value: _value,
+      items: widget.items.map((T value) {
+        return DropdownMenuItem<T>(
+          value: value,
+          child: Text(value.toString()),
+        );
+      }).toList(),
+      onChanged: (T? newValue) {
+        setState(() {
+          _value = newValue;
+        });
+        widget.onChanged(newValue);
+      },
+    );
+  }
+} // ignore: must_be_immutable
+
+class CustomTextFormField extends StatefulWidget {
+  final String? initialValue;
+  final void Function(String) onChanged;
+
+  const CustomTextFormField({
+    Key? key,
+    this.initialValue,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  _CustomTextFormFieldState createState() => _CustomTextFormFieldState();
+}
+
+class _CustomTextFormFieldState extends State<CustomTextFormField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: _controller,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(),
+      ),
+      onChanged: widget.onChanged,
+    );
+  }
+} // ignore: must_be_immutable
+
+class CustomDropdownButton1<T> extends StatefulWidget {
+  final List<T> items;
+  final T? value;
+  final void Function(T?) onChanged;
+
+  const CustomDropdownButton1({
+    Key? key,
+    required this.items,
+    this.value,
+    required this.onChanged,
+  }) : super(key: key);
+
+  @override
+  _CustomDropdownButtonState<T> createState() =>
+      _CustomDropdownButtonState<T>();
+}
+
+class _CustomDropdownButtonState1<T> extends State<CustomDropdownButton<T>> {
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButton<T>(
+      value: widget.value,
+      items: widget.items.map((T value) {
+        return DropdownMenuItem<T>(
+          value: value,
+          child: Text(value.toString()),
+        );
+      }).toList(),
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+class PredictionScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    print("Prediction Screen Clicked");
+    return Scaffold(
+      appBar: AppBar(title: Text('Prediction')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Prediction Screen',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey,
+              ),
+            ),
+            SizedBox(height: 50),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 20,
+              runSpacing: 20,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120, 120),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    print('Current Location Prediction clicked');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CurrentLocationPrediction()),
+                    );
+                  },
+                  child: Text('Current Location Prediction'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(120, 120),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    print('Custom Location Prediction clicked');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CustomLocationPrediction()),
+                    );
+                  },
+                  child: Text('Custom Location Prediction'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CurrentLocationPrediction extends StatefulWidget {
+  @override
+  _CurrentLocationPredictionState createState() =>
+      _CurrentLocationPredictionState();
+}
+
+class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   final _dataCollection = _DataCollectionState();
-  String _locName = '';
   String _isp = '';
   String _long = '';
   String _lat = '';
@@ -1030,7 +1294,7 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
     if (res.statusCode == 200) {
       var data = json.decode(res.body);
       setState(() {
-        _temp = data['main']['temp'].toString() ?? 'Unknown weather';
+        _temp = data['main']['temp'].toString() ?? 'Unknown wea ther';
         _climate = data['weather'][0]['description'] ?? 'Unknown climate';
       });
     } else {
@@ -1041,8 +1305,8 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
     }
   }
 
-  void showDataInTable(BuildContext context,
-      _DataCollectionState dataCollection, String location) {
+  void showDataInTable(
+      BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1126,19 +1390,13 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)), // Changed to temp
+                      DataCell(Text(_temp)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
                       DataCell(Text(_climate)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Location')),
-                      DataCell(Text(location)),
                     ],
                   ),
                 ],
@@ -1153,47 +1411,28 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Use Current Location')),
+      appBar: AppBar(title: const Text('Current Location Prediction')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Current location network prediction'),
-            SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(),
-              ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Enter location',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _locName = value;
-                  });
-                },
-              ),
-            ),
+            Text('Current Location Prediction Screen'),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 await _dataCollection.getSpeedStats();
                 await getConnectionDetails();
                 await getLocation();
-                showDataInTable(context, _dataCollection, _locName);
+                showDataInTable(context, _dataCollection);
               },
               child: Text('Fetch Data'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                // Handle predict using decision tree button click
                 print('Predict using Decision Tree button clicked');
-                // TODO: implement predict using decision tree logic
               },
-              child: Text('Predict using Random Forest'),
+              child: Text('Predict'),
             ),
           ],
         ),
@@ -1202,20 +1441,20 @@ class _LocationBasedPredictionState extends State<LocationBasedPrediction> {
   }
 }
 
-class TimeBasedPrediction extends StatefulWidget {
+class CustomLocationPrediction extends StatefulWidget {
   @override
-  _TimeBasedPredictionState createState() => _TimeBasedPredictionState();
+  _CustomLocationPredictionState createState() =>
+      _CustomLocationPredictionState();
 }
 
-class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
+class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   final _dataCollection = _DataCollectionState();
-  String _locName = '';
   String _isp = '';
   String _long = '';
   String _lat = '';
   String _temp = '';
   String _climate = '';
-  String _time = '';
+  String _customLocation = '';
 
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
@@ -1242,16 +1481,6 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
         _isp = 'Unknown';
       });
     }
-  }
-
-  Future<void> getLocation() async {
-    Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low);
-    setState(() {
-      _long = pos.longitude.toString();
-      _lat = pos.latitude.toString();
-    });
-    await _getWeather();
   }
 
   Future<void> _getWeather() async {
@@ -1327,7 +1556,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Time')),
-                      DataCell(Text('${_time}')),
+                      DataCell(Text('${dataCollection.time}')),
                     ],
                   ),
                   DataRow(
@@ -1366,6 +1595,12 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                       DataCell(Text(_climate)),
                     ],
                   ),
+                  DataRow(
+                    cells: [
+                      DataCell(Text('Location')),
+                      DataCell(Text(_customLocation)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1378,28 +1613,23 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Time Based Prediction')),
+      appBar: AppBar(title: const Text('Custom Location Prediction')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Time Based Prediction Screen'),
+            Text('Custom Location Prediction Screen'),
             SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(),
+            TextField(
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Enter custom location',
               ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Enter time',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _time = value;
-                  });
-                },
-              ),
+              onChanged: (value) {
+                setState(() {
+                  _customLocation = value;
+                });
+              },
             ),
             SizedBox(height: 20),
             ElevatedButton(
@@ -1407,7 +1637,6 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
                 await _dataCollection.getSpeedStats();
                 await getConnectionDetails();
                 await _getWeather();
-                await getLocation();
                 showDataInTable(context, _dataCollection);
               },
               child: Text('Fetch Data'),
@@ -1417,342 +1646,7 @@ class _TimeBasedPredictionState extends State<TimeBasedPrediction> {
               onPressed: () {
                 print('Predict using Decision Tree button clicked');
               },
-              child: Text('Predict using Decision Tree'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class TimeLocationPrediction extends StatefulWidget {
-  @override
-  _TimeLocationPredictionState createState() => _TimeLocationPredictionState();
-}
-
-class _TimeLocationPredictionState extends State<TimeLocationPrediction> {
-  final _dataCollection = _DataCollectionState();
-  String _locName = '';
-  String _isp = '';
-  String _long = '';
-  String _lat = '';
-  String _temp = '';
-  String _climate = '';
-  String _time = '';
-
-  Future<void> getConnectionDetails() async {
-    final res = await http.get(Uri.parse('http://ip-api.com/json'));
-    if (res.statusCode == 200) {
-      var data = json.decode(res.body);
-      var name = data['isp'].toLowerCase();
-      var isp1 = name.contains("jio")
-          ? "Jio"
-          : name.contains("airtel")
-              ? "Airtel"
-              : name.contains("bharti")
-                  ? "Airtel"
-                  : name.contains("vodafone")
-                      ? "Vodafone"
-                      : name.contains("bsnl")
-                          ? "BSNL"
-                          : "Other";
-
-      setState(() {
-        _isp = isp1;
-      });
-    } else {
-      setState(() {
-        _isp = 'Unknown';
-      });
-    }
-  }
-
-  Future<void> getLocation() async {
-    Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low);
-    setState(() {
-      _long = pos.longitude.toString();
-      _lat = pos.latitude.toString();
-    });
-    await _getWeather();
-  }
-
-  Future<void> _getWeather() async {
-    final url =
-        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode == 200) {
-      var data = json.decode(res.body);
-      setState(() {
-        _temp = data['main']['temp'].toString() ?? 'Unknown weather';
-        _climate = data['weather'][0]['description'] ?? 'Unknown climate';
-      });
-    } else {
-      setState(() {
-        _temp = "Error in finding temperature";
-        _climate = "Error in finding climate";
-      });
-    }
-  }
-
-  void showDataInTable(
-      BuildContext context, _DataCollectionState dataCollection) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Data Table'),
-          content: SizedBox(
-            height: 500,
-            child: SingleChildScrollView(
-              child: DataTable(
-                columns: [
-                  DataColumn(label: Text('Property')),
-                  DataColumn(label: Text('Value')),
-                ],
-                rows: [
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Mobility Status')),
-                      DataCell(Text('${dataCollection.mobility}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Movement Speed')),
-                      DataCell(Text('${dataCollection.velocity}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Signal Strength')),
-                      DataCell(Text('${dataCollection.signal_strength}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('User ISP')),
-                      DataCell(Text(_isp)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Latitude')),
-                      DataCell(Text(_lat)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Longitude')),
-                      DataCell(Text(_long)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Time')),
-                      DataCell(Text('${_time}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Date')),
-                      DataCell(Text('${dataCollection.date}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Day')),
-                      DataCell(Text('${dataCollection.day}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Type of Day')),
-                      DataCell(Text('${dataCollection.dayType}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Session')),
-                      DataCell(Text('${dataCollection.session}')),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Climate')),
-                      DataCell(Text(_climate)),
-                    ],
-                  ),
-                  DataRow(
-                    cells: [
-                      DataCell(Text('Location')),
-                      DataCell(Text(_locName)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Time and Location Based Prediction')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Time and Location Based Prediction Screen'),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(),
-              ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Enter location',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _locName = value;
-                  });
-                },
-              ),
-            ),
-            SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(),
-              ),
-              child: TextField(
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Enter time',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _time = value;
-                  });
-                },
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                await _dataCollection.getSpeedStats();
-                await getConnectionDetails();
-                await getLocation();
-                showDataInTable(context, _dataCollection);
-              },
-              child: Text('Fetch Data'),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                print('Predict using Decision Tree button clicked');
-              },
-              child: Text('Predict using Gradient Boosting'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class PredictionScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    print("PredictionScreen Clicked");
-    return Scaffold(
-      appBar: AppBar(title: Text('Prediction')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Prediction Screen',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueGrey,
-              ),
-            ),
-            SizedBox(height: 50),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 20,
-              runSpacing: 20,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(120, 120),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    print('Location Based Prediction clicked');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => LocationBasedPrediction()),
-                    );
-                  },
-                  child: Text('Location Based Prediction'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(120, 120),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    print('Time Based Prediction clicked');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => TimeBasedPrediction()),
-                    );
-                  },
-                  child: Text('Time Based Prediction'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(120, 120),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    print('Both Location and Time Based Prediction clicked');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => TimeLocationPrediction()),
-                    );
-                  },
-                  child: Text('Both Location and Time Based Prediction'),
-                ),
-              ],
+              child: Text('Predict'),
             ),
           ],
         ),
