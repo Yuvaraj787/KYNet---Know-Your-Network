@@ -156,6 +156,7 @@ class _DataCollectionState extends State<DataCollection> {
       nr_band,
       gsm_asuLevel,
       cdma_asuLevel;
+
   Future<void> getStrength() async {
     var data = await platform.invokeMethod("messageFunction");
     print("got");
@@ -562,9 +563,9 @@ class _DataCollectionState extends State<DataCollection> {
                                   DropdownButton<String>(
                                     value: _envType,
                                     items: <String>[
+                                      'Free',
                                       'Crowded',
-                                      'Moderate',
-                                      'Free'
+                                      'Moderate'
                                     ].map((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
@@ -1187,6 +1188,12 @@ class _CustomDropdownButtonState1<T> extends State<CustomDropdownButton<T>> {
   }
 }
 
+class CurrentLocationPrediction extends StatefulWidget {
+  @override
+  _CurrentLocationPredictionState createState() =>
+      _CurrentLocationPredictionState();
+}
+
 class PredictionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -1258,12 +1265,6 @@ class PredictionScreen extends StatelessWidget {
   }
 }
 
-class CurrentLocationPrediction extends StatefulWidget {
-  @override
-  _CurrentLocationPredictionState createState() =>
-      _CurrentLocationPredictionState();
-}
-
 class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   final _dataCollection = _DataCollectionState();
   String _isp = '';
@@ -1271,6 +1272,226 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   String _lat = '';
   String _temp = '';
   String _climate = '';
+  String long = '';
+  String lat = '';
+  String date = '';
+  String time = '';
+  String days = '';
+  String day = '';
+  String dayType = '';
+  int hour = 0;
+  String session = '';
+  String temp = '';
+  int _ping = 0;
+  String _envType = 'Crowded';
+  String _locName = '';
+  String _env = 'Indoor';
+  int _floor = 0;
+  String _ip = "";
+  String mobility = 'Not Detected';
+  String velocity = '0.0';
+  String climate = '';
+  String contributor = '';
+  String signal_strength = '';
+  double _downloadSpeed = 0;
+  double _uploadSpeed = 0;
+  String _connectionType = "";
+
+  var gsmStrength;
+  var gsmData;
+  var rssi;
+  var asuLevel;
+  var level;
+  var gsm;
+  var cdmaDbm;
+  var cdmaEcio;
+  var evdoDbm;
+  var evdoEcio;
+  var ecdoSnr;
+  var cdmaLevel;
+  var evdoLevel;
+  var cdma;
+  var lteStrength;
+  var lteData;
+  var rsrp;
+  var rsrq;
+  var rssnr;
+  var cqi;
+  var cqiTableIndex;
+  var lte;
+
+  var nr_csicqi,
+      nr_csicqiti,
+      nr_csirsrp,
+      nr_csisinr,
+      nr_dbm,
+      nr_rsrq,
+      nr_rsrp,
+      nr_sssinr,
+      nr_csirsrq,
+      nr_timing;
+  var asu_level,
+      gsm_band,
+      cdma_band,
+      lte_band,
+      nr_band,
+      gsm_asuLevel,
+      cdma_asuLevel;
+
+  Future<void> getOtherMetrics() async {
+    detectMovement();
+    await getLocation();
+    await _getWeather();
+    setTimeDetails();
+    await getConnectionDetails();
+    await getStrength();
+    setState(() {
+      _dataCollection.time = time;
+      _dataCollection.date = date;
+      _dataCollection.day = day;
+      _dataCollection.dayType = dayType;
+      _dataCollection.session = session;
+      _dataCollection.mobility = mobility;
+      _dataCollection.velocity = velocity;
+      _dataCollection.signal_strength = signal_strength;
+      _dataCollection.lat = lat;
+      _dataCollection.long = long;
+      _dataCollection.temp = temp;
+      _dataCollection.climate = climate;
+    });
+  }
+
+ void setTimeDetails() {
+    DateTime now = DateTime.now();
+    date =
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+    time =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    List<String> days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
+    day = days[now.weekday % 7];
+    dayType =
+        (now.weekday == DateTime.saturday || now.weekday == DateTime.sunday)
+            ? 'Weekend'
+            : 'Weekday';
+    int hour = now.hour;
+    session = (hour >= 0 && hour < 6)
+        ? 'Midnight'
+        : (hour >= 6 && hour < 9)
+            ? 'Early Morning'
+            : (hour >= 9 && hour < 12)
+                ? 'Morning'
+                : (hour >= 12 && hour < 16)
+                    ? 'Afternoon'
+                    : (hour >= 16 && hour < 20)
+                        ? 'Evening'
+                        : 'Night';
+  }
+
+  static const platform = MethodChannel('com.example.methodchannel');
+
+  Future<void> getStrength() async {
+    var data = await platform.invokeMethod("messageFunction");
+    print("got");
+    print(data);
+    print("Strength");
+    print(data["lte"]);
+
+    if (data["gsm"] != null) {
+      var gsmData = data["gsm"];
+      gsmStrength = gsmData["strength"].toString();
+      signal_strength = gsmStrength;
+      rssi = gsmData["rssi"].toString();
+      gsm_asuLevel = gsmData["asuLevel"].toString();
+      level = gsmData["level"].toString();
+      print("GSM Data:");
+      print("Strength: $gsmStrength");
+      print("Rssi: $rssi");
+      print("Asu Level: $gsm_asuLevel");
+      print("Level: $level");
+    }
+
+    if (data["cdma"] != null) {
+      var cdmaData = data["cdma"];
+      cdmaDbm = cdmaData["dbm"].toString();
+      signal_strength = cdmaDbm;
+      cdmaEcio = cdmaData["ecio"].toString();
+      evdoDbm = cdmaData["evdoDbm"].toString();
+      evdoEcio = cdmaData["evdoEcio"].toString();
+      ecdoSnr = cdmaData["ecdoSnr"].toString();
+      cdmaLevel = cdmaData["level"].toString();
+      evdoLevel = cdmaData["evdoLevel"].toString();
+      cdma_asuLevel = cdmaData["asuLevel"].toString();
+      print("CDMA Data:");
+      print("Dbm: $cdmaDbm");
+      print("Ecio: $cdmaEcio");
+      print("Evdo Dbm: $evdoDbm");
+      print("Evdo Ecio: $evdoEcio");
+      print("Ecdo Snr: $ecdoSnr");
+      print("Level: $cdmaLevel");
+      print("Evdo Level: $evdoLevel");
+      print("Asu Level: $cdma_asuLevel");
+    }
+
+    if (data["lte"] != null) {
+      var lteData = data["lte"];
+      lteStrength = lteData["strength"].toString();
+      rsrp = lteData["rsrp"].toString();
+      signal_strength = rsrp;
+      rsrq = lteData["rsrq"].toString();
+      rssnr = lteData["rssnr"].toString();
+      level = lteData["level"].toString();
+      asu_level = lteData["asuLevel"].toString();
+      cqi = lteData["cqi"].toString();
+      cqiTableIndex = lteData["cqiTableIndex"].toString();
+      lte_band = lteData["bands"].toString();
+      print("LTE Data:");
+      print("Strength: $lteStrength");
+      print("Rsrp: $rsrp");
+      print("Rsrq: $rsrq");
+      print("Rssnr: $rssnr");
+      print("Level: $level");
+      print("Cqi: $cqi");
+      print("Cqi Table Index: $cqiTableIndex");
+    }
+
+    if (data["nr"] != null) {
+      var nrData = data["nr"];
+      nr_rsrp = nrData["ssRsrp"];
+      signal_strength = nr_rsrp;
+      nr_rsrq = nrData["ssRsrq"];
+      nr_sssinr = nrData["ss Sinr"];
+      nr_dbm = nrData["dbm"];
+      nr_csirsrp = nrData["csiRsrp"];
+      nr_csirsrq = nrData["csiRsrq"];
+      nr_csisinr = nrData["csiSinr"];
+      nr_csicqi = nrData["csiCqiReport"];
+      nr_csicqiti = nrData["csiCqiTableIndex"];
+      nr_timing = nrData["timingAdvanceMicros"];
+      nr_band = nrData["bands"].toString();
+    }
+  }
+
+  Future<void> getLocation() async {
+    Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    setState(() {
+      _long = pos.longitude.toString();
+      _lat = pos.latitude.toString();
+    });
+    print("location p");
+    print(_long);
+    print(_lat);
+  }
+
+  
 
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
@@ -1289,46 +1510,144 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
                           ? "BSNL"
                           : "Other";
 
+      print("ISP ISP");
+      print(name);
       setState(() {
         _isp = isp1;
       });
     } else {
       setState(() {
+        _ip = 'Unknown';
         _isp = 'Unknown';
       });
     }
   }
 
-  Future<void> getLocation() async {
-    Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low);
-    setState(() {
-      _long = pos.longitude.toString();
-      _lat = pos.latitude.toString();
+  void detectMovement() {
+    Geolocator.getPositionStream().listen((position) {
+      double speedMps = position.speed;
+      String category = '';
+      if (speedMps < 0.2) {
+        category = "No movement";
+      } else if (speedMps < 0.7) {
+        category = "Slow Walking";
+      } else if (speedMps < 1.4) {
+        category = "Walking";
+      } else if (speedMps < 3.0) {
+        category = "Running";
+      } else {
+        category = "Moving in Vehicle";
+      }
+
+      setState(() {
+        mobility = category;
+        velocity = speedMps.toStringAsFixed(2);
+        print("Mobility");
+        print(mobility);
+        print("Velocity");
+        print(velocity);
+      });
+
+      print("Category: $category");
     });
-    await _getWeather();
   }
 
-  Future<void> _getWeather() async {
-    final url =
-        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
-    final res = await http.get(Uri.parse(url));
-    if (res.statusCode == 200) {
-      var data = json.decode(res.body);
-      setState(() {
-        _temp = data['main']['temp'].toString() ?? 'Unknown wea ther';
-        _climate = data['weather'][0]['description'] ?? 'Unknown climate';
-      });
-    } else {
-      setState(() {
-        _temp = "Error in finding temperature";
-        _climate = "Error in finding climate";
-      });
+
+  Future<void> dataToServer() async {
+    List<dynamic> row = [
+      time,
+      _lat,
+      _long,
+      _downloadSpeed.toString(),
+      _uploadSpeed.toString(),
+      _ping.toString(),
+      _connectionType,
+      _isp,
+      day,
+      date,
+      dayType,
+      session,
+      temp,
+      climate,
+      _envType,
+      _locName,
+      _floor.toString(),
+      mobility,
+      velocity,
+      gsmStrength,
+      gsm_asuLevel,
+      rssi,
+      cdmaDbm,
+      cdmaEcio,
+      evdoDbm,
+      evdoEcio,
+      ecdoSnr,
+      cdma_asuLevel,
+      cdma_band,
+      rsrp,
+      rsrq,
+      rssnr,
+      cqi,
+      lte_band,
+      nr_dbm,
+      nr_rsrp,
+      nr_rsrq,
+      nr_sssinr,
+      nr_csicqi,
+      nr_csirsrp,
+      nr_csirsrq,
+      nr_band,
+      nr_timing,
+      contributor,
+      _env,
+    ];
+    final url = Uri.parse('http://74.225.246.68/predict');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({'data': row});
+    print("collected data");
+    print(row);
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        print(response.body);
+        var data = json.decode(response.body);
+        data = data['output'];
+        double downloadSpeed = data['download_speed'] ?? 'Unknown ';
+        double uploadSpeed = data['upload_speed'] ?? 'Unknown';
+        double latency = data['latency'] ?? 'Unknown';
+        double rsrp = data['rsrp'] ?? 'Unknown';
+
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Predicted Values'),
+              content: SizedBox(
+                height: 200,
+                child: Column(
+                  children: [
+                    Text('Download Speed: $downloadSpeed'),
+                    Text('Upload Speed: $uploadSpeed'),
+                    Text('Latency: $latency'),
+                    Text('RSRP: $rsrp'),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        print('Failed to send data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error sending data: $e');
     }
   }
 
   void showDataInTable(
-      BuildContext context, _DataCollectionState dataCollection) {
+    BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1346,19 +1665,19 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Mobility Status')),
-                      DataCell(Text('${dataCollection.mobility}')),
+                      DataCell(Text(mobility)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Movement Speed')),
-                      DataCell(Text('${dataCollection.velocity}')),
+                      DataCell(Text(velocity)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Signal Strength')),
-                      DataCell(Text('${dataCollection.signal_strength}')),
+                      DataCell(Text(signal_strength)),
                     ],
                   ),
                   DataRow(
@@ -1370,55 +1689,55 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
                   DataRow(
                     cells: [
                       DataCell(Text('Latitude')),
-                      DataCell(Text(_lat)),
+                      DataCell(Text(lat)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Longitude')),
-                      DataCell(Text(_long)),
+                      DataCell(Text(long)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Time')),
-                      DataCell(Text('${dataCollection.time}')),
+                      DataCell(Text(time)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Date')),
-                      DataCell(Text('${dataCollection.date}')),
+                      DataCell(Text(date)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Day')),
-                      DataCell(Text('${dataCollection.day}')),
+                      DataCell(Text(day)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Type of Day')),
-                      DataCell(Text('${dataCollection.dayType}')),
+                      DataCell(Text(dayType)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Session')),
-                      DataCell(Text('${dataCollection.session}')),
+                      DataCell(Text(session)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Temperature')),
-                      DataCell(Text(_temp)),
+                      DataCell(Text(temp)),
                     ],
                   ),
                   DataRow(
                     cells: [
                       DataCell(Text('Climate')),
-                      DataCell(Text(_climate)),
+                      DataCell(Text(climate)),
                     ],
                   ),
                 ],
@@ -1429,6 +1748,29 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       },
     );
   }
+
+  Future<void> _getWeather() async {
+    final url =
+        'https://api.openweathermap.org/data/2.5/weather?lat=$_lat&lon=$_long&appid=cd908d976e0a1eed6e522b5af2bf5ab7&units=metric';
+    final res = await http.get(Uri.parse(url));
+    print("Status Code");
+    print(res.statusCode);
+    if (res.statusCode == 200) {
+      var data = json.decode(res.body);
+      setState(() {
+        temp = data['main']['temp'].toString() ?? 'Unknown weather';
+        climate = data['weather'][0]['description'] ?? 'Unknown climate';
+      });
+    } else {
+      setState(() {
+        temp = "Error in finding temperature";
+        climate = "Error in finding climate";
+      });
+    }
+  }
+
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -1442,17 +1784,22 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                // await _dataCollection.getSpeedStats();
-                await getConnectionDetails();
+                print("working............");
+                detectMovement();
                 await getLocation();
+                await _getWeather();
+                setTimeDetails();
+                await getConnectionDetails();
+                await getStrength();
                 showDataInTable(context, _dataCollection);
               },
               child: Text('Fetch Data'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
-                print('Predict using Decision Tree button clicked');
+              onPressed: () async {
+                await dataToServer();
+                print('Prediction');
               },
               child: Text('Predict'),
             ),
@@ -1659,6 +2006,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
                 // await _dataCollection.getSpeedStats();
                 await getConnectionDetails();
                 await _getWeather();
+                await _dataCollection.getOtherMetrics();
                 showDataInTable(context, _dataCollection);
               },
               child: Text('Fetch Data'),
