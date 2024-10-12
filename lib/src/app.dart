@@ -8,6 +8,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:collection/collection.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
 import 'package:flutter/services.dart';
@@ -81,6 +83,20 @@ class _DataCollectionState extends State<DataCollection> {
 
   late StreamSubscription<SpeedTestResult> _subscription;
 
+  TextEditingController _controller_2 = TextEditingController();
+
+  void loadUserName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedInput = prefs.getString('userInput') ?? '';
+    _controller_2.text = savedInput;
+  }
+
+  _saveInput(String value) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userInput', value);
+    print("saved");
+  }
+
   void setTimeDetails() {
     DateTime now = DateTime.now();
     date =
@@ -148,7 +164,6 @@ class _DataCollectionState extends State<DataCollection> {
     print(data["lte"]);
 
     if (data["gsm"] != null) {
-      _connectionType = '2G';
       var gsmData = data["gsm"];
       gsmStrength = gsmData["strength"].toString();
       signal_strength = gsmStrength;
@@ -163,7 +178,6 @@ class _DataCollectionState extends State<DataCollection> {
     }
 
     if (data["cdma"] != null) {
-      _connectionType = '3G';
       var cdmaData = data["cdma"];
       cdmaDbm = cdmaData["dbm"].toString();
       signal_strength = cdmaDbm;
@@ -186,7 +200,6 @@ class _DataCollectionState extends State<DataCollection> {
     }
 
     if (data["lte"] != null) {
-      _connectionType = '4G';
       var lteData = data["lte"];
       lteStrength = lteData["strength"].toString();
       rsrp = lteData["rsrp"].toString();
@@ -209,7 +222,6 @@ class _DataCollectionState extends State<DataCollection> {
     }
 
     if (data["nr"] != null) {
-      _connectionType = '5G';
       var nrData = data["nr"];
       nr_rsrp = nrData["ssRsrp"];
       signal_strength = nr_rsrp;
@@ -233,7 +245,6 @@ class _DataCollectionState extends State<DataCollection> {
       long = pos.longitude.toString();
       lat = pos.latitude.toString();
     });
-    await _getWeather();
   }
 
   Future<void> _getWeather() async {
@@ -330,32 +341,30 @@ class _DataCollectionState extends State<DataCollection> {
   @override
   void initState() {
     super.initState();
+    loadUserName();
   }
-
-  // void startAutomaticProcess() {
-  //   startTest();
-  // }
 
   bool _isCollectingData = false;
 
   void startDataCollection() {
+    print("vela start");
     if (!_isCollectingData) {
       _isCollectingData = true;
       startTest();
-      startTimer();
     }
   }
 
   void stopDataCollection() {
+    print("vela end");
     if (_isCollectingData) {
       _isCollectingData = false;
-      stopProcess();
-      stopTimer();
     }
   }
 
+  var testStatus = "";
+
   void startTest() {
-    stopTimer();
+    print("speed test started");
     _plugin.startSpeedTest();
     _subscription = _plugin.speedTestResultStream.listen((result) {
       setState(() {
@@ -368,38 +377,53 @@ class _DataCollectionState extends State<DataCollection> {
         if (result.error.isNotEmpty) {
           Fluttertoast.showToast(msg: result.error.toString());
         }
+
+        if (result.status != "Speed test finished") {
+          setState(() {
+            testStatus = "Testing " +
+                result.status +
+                " Speed ( " +
+                result.percent.toString() +
+                " % ) Completed";
+          });
+        } else {
+          setState(() {
+            testStatus = "Speed Test Complete";
+            getOtherMetricsAndRepeat();
+          });
+        }
       });
-      getSpeedStatsAndSendDataAndRepeat();
     }, onDone: () {
-      startTimer();
       _subscription.cancel();
     }, onError: (error) {
       _subscription.cancel();
+      _isCollectingData = false;
     });
   }
 
-  void getSpeedStatsAndSendDataAndRepeat() async {
-    await getSpeedStats();
-    sendToServer();
-    startTest();
+  void getOtherMetricsAndRepeat() async {
+    await getOtherMetrics();
+    await sendToServer();
+    print("waiting 5 seconds");
+    await Future.delayed(Duration(seconds: 5));
+    if (_isCollectingData) startTest();
   }
 
-  Future<void> getSpeedStats() async {
+  Future<void> getOtherMetrics() async {
     detectMovement();
     await getLocation();
+    await _getWeather();
     setTimeDetails();
     await getConnectionDetails();
-    await _getWeather();
     await getStrength();
-
-    addEntry();
+    // addEntry();
   }
 
   List<List<dynamic>> datas = [];
 
   List<dynamic> last_inserted = [];
 
-  void addEntry() {
+  Future<void> sendToServer() async {
     List<dynamic> row = [
       time,
       lat,
@@ -447,26 +471,33 @@ class _DataCollectionState extends State<DataCollection> {
       contributor,
       _env,
     ];
-    final listEquality = ListEquality();
-    if (!(ListEquality().equals(row, last_inserted))) {
-      datas.add(row);
-      last_inserted = row;
-    }
-  }
-
-  void sendToServer() async {
     final url = Uri.parse('http://74.225.246.68/add_data');
     final headers = {'Content-Type': 'application/json'};
-    final body = jsonEncode({'data': datas});
+    final body = jsonEncode({'data': row});
     print("collected data");
-    print(datas);
+    print(row);
+
+    if (_downloadSpeed == 0.0 || _uploadSpeed == 0.0 || _ping == 0) return;
+
+    if (row == last_inserted) {
+      print("duplicated rows detected");
+      return;
+    }
+    
+
+    final listEquality = ListEquality();
+
+    if (listEquality.equals(row, last_inserted)) {
+      print("advance security ");
+      return;
+    };
+
+    last_inserted = List.from(row);
 
     try {
       final response = await http.post(url, headers: headers, body: body);
-
       if (response.statusCode == 200) {
         print('Data sent successfully');
-        datas.clear();
       } else {
         print('Failed to send data: ${response.statusCode}');
       }
@@ -480,28 +511,6 @@ class _DataCollectionState extends State<DataCollection> {
       padding: const EdgeInsets.all(8.0),
       child: Text(text, style: const TextStyle(fontSize: 16)),
     );
-  }
-
-  Timer? _timer;
-
-  Timer? _fiveTimer;
-
-  void startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 2), (Timer timer) {
-      getSpeedStats();
-    });
-  }
-
-  void stopTimer() {
-    _timer?.cancel();
-  }
-
-  void startProcess() {
-    startTimer();
-  }
-
-  void stopProcess() {
-    stopTimer();
   }
 
   @override
@@ -673,10 +682,13 @@ class _DataCollectionState extends State<DataCollection> {
                           ),
                         ),
                         TextField(
+                          controller: _controller_2,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                           ),
                           onChanged: (value) {
+                            _saveInput(value);
+                            print("passed");
                             setState(() {
                               contributor = value;
                             });
@@ -687,7 +699,17 @@ class _DataCollectionState extends State<DataCollection> {
                   ),
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text('Data Fetched'.toUpperCase(),
+                    child: Text(
+                        'Data Fetching '.toUpperCase() +
+                            (_isCollectingData ? " Ongoing " : "Stopped"),
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black)),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(testStatus,
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1420,7 +1442,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                await _dataCollection.getSpeedStats();
+                // await _dataCollection.getSpeedStats();
                 await getConnectionDetails();
                 await getLocation();
                 showDataInTable(context, _dataCollection);
@@ -1634,7 +1656,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                await _dataCollection.getSpeedStats();
+                // await _dataCollection.getSpeedStats();
                 await getConnectionDetails();
                 await _getWeather();
                 showDataInTable(context, _dataCollection);
