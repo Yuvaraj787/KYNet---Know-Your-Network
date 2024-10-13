@@ -43,9 +43,9 @@ class _DataCollectionState extends State<DataCollection> {
 
   int _ping = 0;
 
-  String _envType = 'Crowded';
-  String _locName = '';
-  String _env = 'Indoor';
+  String _envType = 'Free';
+  String _locName = 'KP'; 
+  String _env = 'Outdoor';
   int _floor = 0;
   String temp = '';
   String mobility = 'Not Detected';
@@ -348,6 +348,7 @@ class _DataCollectionState extends State<DataCollection> {
   bool _isCollectingData = false;
 
   void startDataCollection() {
+    detectMovement();
     print("vela start");
     if (!_isCollectingData) {
       _isCollectingData = true;
@@ -398,25 +399,26 @@ class _DataCollectionState extends State<DataCollection> {
       _subscription.cancel();
     }, onError: (error) {
       _subscription.cancel();
+      testStatus = "Something gone wrong!";
       _isCollectingData = false;
     });
   }
 
   void getOtherMetricsAndRepeat() async {
     await getOtherMetrics();
-    await sendToServer();
-    print("waiting 5 seconds");
-    await Future.delayed(Duration(seconds: 5));
+    print("send success");
     if (_isCollectingData) startTest();
   }
 
   Future<void> getOtherMetrics() async {
-    detectMovement();
-    await getLocation();
-    await _getWeather();
-    setTimeDetails();
-    await getConnectionDetails();
-    await getStrength();
+    for (int i = 0; i < 4; i++) {
+      await getLocation();
+      await _getWeather();
+      setTimeDetails();
+      await getConnectionDetails();
+      await getStrength();
+      await sendToServer();
+    }
     // addEntry();
   }
 
@@ -484,14 +486,14 @@ class _DataCollectionState extends State<DataCollection> {
       print("duplicated rows detected");
       return;
     }
-    
 
     final listEquality = ListEquality();
 
     if (listEquality.equals(row, last_inserted)) {
       print("advance security ");
       return;
-    };
+    }
+    ;
 
     last_inserted = List.from(row);
 
@@ -593,14 +595,28 @@ class _DataCollectionState extends State<DataCollection> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  TextField(
-                                    controller: _locNameCtrl,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (value) {
+                                  
+                                  DropdownButton<String>(
+                                    value: _locName,
+                                    items: <String>[
+                                      'KP',
+                                      'IT Department',
+                                      'Red Building',
+                                      'Blueshed',
+                                      'Hostel Road',
+                                      'Senbagam Hostel',
+                                      'Library',
+                                      'Printing Department',
+                                      'Alumni Center'
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
                                       setState(() {
-                                        _locName = value;
+                                        _locName = newValue!;
                                       });
                                     },
                                   ),
@@ -966,6 +982,7 @@ class _DataCollectionState extends State<DataCollection> {
                           child: Text("Start Data Collection".toUpperCase(),
                               style: const TextStyle(color: Colors.white)),
                         ),
+
                         ElevatedButton(
                           onPressed: stopDataCollection,
                           style: ElevatedButton.styleFrom(
@@ -1283,12 +1300,12 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   String session = '';
   String temp = '';
   int _ping = 0;
-  String _envType = 'Crowded';
-  String _locName = '';
-  String _env = 'Indoor';
+  String _envType = 'Free';
+  String _locName = 'KP';
+  String _env = 'Outdoor';
   int _floor = 0;
   String _ip = "";
-  String mobility = 'Not Detected';
+  String mobility = 'No Movement';
   String velocity = '0.0';
   String climate = '';
   String contributor = '';
@@ -1362,7 +1379,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     });
   }
 
- void setTimeDetails() {
+  void setTimeDetails() {
     DateTime now = DateTime.now();
     date =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
@@ -1492,8 +1509,6 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     print(_lat);
   }
 
-  
-
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
     if (res.statusCode == 200) {
@@ -1553,15 +1568,15 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     });
   }
 
-  String time_new="";
-
+  String time_new = "";
 
   Future<void> dataToServer() async {
     if (_customTime != "") {
       time_new = _customTime;
-    }else{
+    } else {
       time_new = time;
     }
+
     List<dynamic> row = [
       time_new,
       _lat,
@@ -1609,6 +1624,8 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       contributor,
       _env,
     ];
+
+    print("clicked");
     final url = Uri.parse('http://74.225.246.68/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
@@ -1622,6 +1639,8 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
         print(response.body);
         var data = json.decode(response.body);
         data = data['output'];
+        print("predicitions 8");
+        print(data);
         double downloadSpeed = data['download_speed'] ?? 'Unknown ';
         double uploadSpeed = data['upload_speed'] ?? 'Unknown';
         double latency = data['latency'] ?? 'Unknown';
@@ -1655,7 +1674,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   }
 
   void showDataInTable(
-    BuildContext context, _DataCollectionState dataCollection) {
+      BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1776,9 +1795,6 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       });
     }
   }
-
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -1933,7 +1949,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     });
   }
 
- void setTimeDetails() {
+  void setTimeDetails() {
     DateTime now = DateTime.now();
     date =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
@@ -2063,8 +2079,6 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     print(_lat);
   }
 
-  
-
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
     if (res.statusCode == 200) {
@@ -2124,13 +2138,12 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     });
   }
 
-  String time_new="";
-
+  String time_new = "";
 
   Future<void> dataToServer() async {
     if (_customTime != "") {
       time_new = _customTime;
-    }else{
+    } else {
       time_new = time;
     }
     List<dynamic> row = [
@@ -2226,7 +2239,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   }
 
   void showDataInTable(
-    BuildContext context, _DataCollectionState dataCollection) {
+      BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
