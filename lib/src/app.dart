@@ -7,7 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:collection/collection.dart';
-
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latLng; // Import with alias
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // experimental
@@ -2422,12 +2425,230 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   }
 }
 
+class MapScreen extends StatefulWidget {
+  @override
+  _MapScreenState createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  final List<Map<String, dynamic>> _locations = [];
+  final Dio _dio = Dio();
+
+  String? _selectedType; // Variable for selected type
+  String? _selectedIsp; // Variable for selected ISP
+
+  final List<String> _types = ['4G', '5G']; // Options for type
+  final List<String> _isps = [
+    'Jio',
+    'Airtel',
+    'Vodafone',
+    'BSNL',
+    'Other'
+  ]; // Options for ISP
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLocations();
+  }
+
+  Future<void> fetchLocations() async {
+    final url = 'http://74.225.246.68/tempo_spatial_data';
+    const int maxRetries = 10;
+    int retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        final response = await _dio.get(url,
+            options: Options(
+              receiveTimeout: 10000, // 10 seconds
+              sendTimeout: 10000, // 10 seconds
+            ));
+        if (response.statusCode == 200) {
+          try {
+            final List<dynamic> data = response.data['tempo_spatial_data'];
+            setState(() {
+              _locations.addAll(data
+                  .map((item) => {
+                        'lat': item['lat'],
+                        'long': item['long'],
+                        'isp': item['isp'],
+                        'type': item['connection_type'],
+                        'd_speed': item['download_speed'] ?? 0.0,
+                        'u_speed': item['upload_speed'] ?? 0.0,
+                      })
+                  .toList());
+            });
+            print(_locations);
+            return; // Exit the loop if successful
+          } catch (e) {
+            print('Error parsing JSON: $e');
+            return; // Exit the loop if parsing fails
+          }
+        } else {
+          print('Error fetching locations -: ${response.statusCode}');
+          return; // Exit the loop if response status is not 200
+        }
+      } on DioError catch (e) {
+        print('DioError: $e');
+      } catch (e) {
+        print('Error fetching locations: $e');
+      }
+
+      retryCount++;
+      final delay = Duration(seconds: 2 * retryCount); // Exponential backoff
+      print('Retrying in ${delay.inSeconds} seconds...');
+      await Future.delayed(delay);
+    }
+
+    print('Failed to fetch locations after $maxRetries attempts.');
+  }
+
+  // Handle the map tap action
+  void _handleTap(TapPosition point, latLng.LatLng tappedPoint) {
+    print("Tapped location: ${tappedPoint.latitude}, ${tappedPoint.longitude}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print("MapScreen Clicked");
+
+    // Filter locations based on selected type and ISP
+    List<Map<String, dynamic>> filteredLocations = _locations.where((location) {
+      bool matchesType =
+          _selectedType == null || location['type'] == _selectedType;
+      bool matchesIsp = _selectedIsp == null || location['isp'] == _selectedIsp;
+      return matchesType && matchesIsp;
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Collected Areas ')),
+      body: Column(
+        children: [
+          // Dropdown for selecting type (4G/5G)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    hint: Text('Select Type'),
+                    value: _selectedType,
+                    isExpanded: true,
+                    items: _types.map((type) {
+                      return DropdownMenuItem<String>(
+                        value: type,
+                        child: Text(type),
+                      );
+                    }).toList(),
+                    onChanged: (newType) {
+                      setState(() {
+                        _selectedType = newType;
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(width: 10),
+                // Dropdown for selecting ISP
+                Expanded(
+                  child: DropdownButton<String>(
+                    hint: Text('Select ISP'),
+                    value: _selectedIsp,
+                    isExpanded: true,
+                    items: _isps.map((isp) {
+                      return DropdownMenuItem<String>(
+                        value: isp,
+                        child: Text(isp),
+                      );
+                    }).toList(),
+                    onChanged: (newIsp) {
+                      setState(() {
+                        _selectedIsp = newIsp;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // The map with markers filtered by type and ISP
+          Expanded(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: latLng.LatLng(13.010887, 80.235406),
+                initialZoom: 17.0,
+                onLongPress: (tapPosition, point) =>
+                    _handleTap(tapPosition, point),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=9b3551f1-aff7-4ea2-b95d-09b880bf68d7',
+                  subdomains: ['a', 'b', 'c'],
+                  retinaMode: true,
+                ),
+                MarkerLayer(
+                  markers: filteredLocations.map((location) {
+                    IconData icon;
+                    Color color;
+
+                    // Determine icon and color based on connection type and ISP
+                    switch (location['type']) {
+                      case '5G':
+                        icon = Icons.location_on;
+                        break;
+                      case '4G':
+                      default:
+                        icon = Icons.circle;
+                        break;
+                    }
+
+                    switch (location['isp']) {
+                      case 'Jio':
+                        color = Colors.green.withOpacity(0.6);
+                        break;
+                      case 'Airtel':
+                        color = Colors.blue.withOpacity(0.6);
+                        break;
+                      case 'Vodafone':
+                        color = Colors.purple.withOpacity(0.6);
+                        break;
+                      case 'BSNL':
+                        color = Colors.grey.withOpacity(0.6);
+                        break;
+                      default:
+                        color = Colors.black.withOpacity(0.6);
+                        break;
+                    }
+
+                    return Marker(
+                      width: 80.0,
+                      height: 80.0,
+                      point: latLng.LatLng(location['lat'], location['long']),
+                      child: Icon(
+                        icon,
+                        color: color,
+                        size: location['type'] == '5G' ? 30.0 : 20.0,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MyAppState extends State<MyApp> {
   int _currentIndex = 0;
 
   final List<Widget> _children = [
     DataCollection(),
     PredictionScreen(),
+    MapScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -2453,6 +2674,10 @@ class _MyAppState extends State<MyApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics),
               label: 'Prediction',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map),
+              label: 'Map', // Add a new BottomNavigationBarItem
             ),
           ],
         ),
