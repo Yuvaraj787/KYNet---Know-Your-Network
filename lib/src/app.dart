@@ -46,9 +46,9 @@ class _DataCollectionState extends State<DataCollection> {
 
   int _ping = 0;
 
-  String _envType = 'Crowded';
-  String _locName = '';
-  String _env = 'Indoor';
+  String _envType = 'Free';
+  String _locName = 'KP';
+  String _env = 'Outdoor';
   int _floor = 0;
   String temp = '';
   String mobility = 'Not Detected';
@@ -351,6 +351,7 @@ class _DataCollectionState extends State<DataCollection> {
   bool _isCollectingData = false;
 
   void startDataCollection() {
+    detectMovement();
     print("vela start");
     if (!_isCollectingData) {
       _isCollectingData = true;
@@ -401,25 +402,27 @@ class _DataCollectionState extends State<DataCollection> {
       _subscription.cancel();
     }, onError: (error) {
       _subscription.cancel();
+      testStatus = "Something gone wrong!";
       _isCollectingData = false;
     });
   }
 
   void getOtherMetricsAndRepeat() async {
     await getOtherMetrics();
-    await sendToServer();
-    print("waiting 5 seconds");
-    await Future.delayed(Duration(seconds: 5));
+    print("send 4 success");
     if (_isCollectingData) startTest();
   }
 
   Future<void> getOtherMetrics() async {
-    detectMovement();
-    await getLocation();
-    await _getWeather();
-    setTimeDetails();
-    await getConnectionDetails();
-    await getStrength();
+    for (int i = 0; i < 4; i++) {
+      await getLocation();
+      await _getWeather();
+      setTimeDetails();
+      await getConnectionDetails();
+      await getStrength();
+      await sendToServer();
+      print("One iteration finished");
+    }
     // addEntry();
   }
 
@@ -596,14 +599,27 @@ class _DataCollectionState extends State<DataCollection> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  TextField(
-                                    controller: _locNameCtrl,
-                                    decoration: InputDecoration(
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (value) {
+                                  DropdownButton<String>(
+                                    value: _locName,
+                                    items: <String>[
+                                      'KP',
+                                      'IT Department',
+                                      'Red Building',
+                                      'Blueshed',
+                                      'Hostel Road',
+                                      'Senbagam Hostel',
+                                      'Library',
+                                      'Printing Department',
+                                      'Alumni Center'
+                                    ].map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newValue) {
                                       setState(() {
-                                        _locName = value;
+                                        _locName = newValue!;
                                       });
                                     },
                                   ),
@@ -1286,12 +1302,12 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   String session = '';
   String temp = '';
   int _ping = 0;
-  String _envType = 'Crowded';
-  String _locName = '';
-  String _env = 'Indoor';
+  String _envType = 'Free';
+  String _locName = 'KP';
+  String _env = 'Outdoor';
   int _floor = 0;
   String _ip = "";
-  String mobility = 'Not Detected';
+  String mobility = 'No Movement';
   String velocity = '0.0';
   String climate = '';
   String contributor = '';
@@ -1562,6 +1578,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     } else {
       time_new = time;
     }
+
     List<dynamic> row = [
       time_new,
       _lat,
@@ -1609,6 +1626,8 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       contributor,
       _env,
     ];
+
+    print("clicked");
     final url = Uri.parse('http://74.225.246.68/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
@@ -1622,27 +1641,79 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
         print(response.body);
         var data = json.decode(response.body);
         data = data['output'];
-        double downloadSpeed = data['download_speed'] ?? 'Unknown ';
-        double uploadSpeed = data['upload_speed'] ?? 'Unknown';
-        double latency = data['latency'] ?? 'Unknown';
-        double rsrp = data['rsrp'] ?? 'Unknown';
+        print("predicitions 8");
+        print(data);
+
+        double downloadSpeed = data['download_speed'] != null
+            ? double.tryParse(data['download_speed'].toString()) ?? 0.0
+            : 0.0;
+        double uploadSpeed = data['upload_speed'] != null
+            ? double.tryParse(data['upload_speed'].toString()) ?? 0.0
+            : 0.0;
+        double latency = data['latency'] != null
+            ? double.tryParse(data['latency'].toString()) ?? 0.0
+            : 0.0;
+        double rsrp = data['rsrp'] != null
+            ? double.tryParse(data['rsrp'].toString()) ?? 0.0
+            : 0.0;
+
+        String formattedDownloadSpeed = downloadSpeed.toStringAsFixed(2);
+        String formattedUploadSpeed = uploadSpeed.toStringAsFixed(2);
+        String formattedLatency = latency.toStringAsFixed(2);
+        String formattedRsrp = rsrp.toStringAsFixed(2);
 
         showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text('Predicted Values'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Predicted Values',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                  fontSize: 22,
+                ),
+                textAlign: TextAlign.center,
+              ),
               content: SizedBox(
-                height: 200,
+                height: 220,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Download Speed: $downloadSpeed'),
-                    Text('Upload Speed: $uploadSpeed'),
-                    Text('Latency: $latency'),
-                    Text('RSRP: $rsrp'),
+                    _buildInfoRow('Download Speed',
+                        '$formattedDownloadSpeed Mbps', Icons.download_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow('Upload Speed', '$formattedUploadSpeed Mbps',
+                        Icons.upload_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow(
+                        'Latency', '$formattedLatency ms', Icons.timer_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow('RSRP', '$formattedRsrp dbm',
+                        Icons.network_cell_rounded),
                   ],
                 ),
               ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: Text('Close'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -1652,6 +1723,29 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     } catch (e) {
       print('Error sending data: $e');
     }
+  }
+
+// Helper function to build each info row with an icon
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blueAccent),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
   }
 
   void showDataInTable(
