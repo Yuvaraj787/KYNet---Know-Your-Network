@@ -12,6 +12,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng; // Import with alias
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'Picker.dart';
 
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
@@ -1270,7 +1271,7 @@ class PredictionScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CustomLocationPrediction()),
+                          builder: (context) => Picker()),
                     );
                   },
                   child: Text('Custom Location Prediction'),
@@ -1588,10 +1589,12 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       _ping.toString(),
       _connectionType,
       _isp,
-      day,
+      // day, 
+      "Saturday",
       date,
       dayType,
-      session,
+      // session,
+      "Morning",
       temp,
       climate,
       _envType,
@@ -2727,7 +2730,7 @@ class _MyAppState extends State<MyApp> {
 
   final List<Widget> _children = [
     DataCollection(),
-    PredictionScreen(),
+    Picker(),
     MapScreen(),
   ];
 
