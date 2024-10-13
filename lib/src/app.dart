@@ -7,7 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:collection/collection.dart';
-
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latLng; // Import with alias
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // experimental
@@ -484,14 +487,14 @@ class _DataCollectionState extends State<DataCollection> {
       print("duplicated rows detected");
       return;
     }
-    
 
     final listEquality = ListEquality();
 
     if (listEquality.equals(row, last_inserted)) {
       print("advance security ");
       return;
-    };
+    }
+    ;
 
     last_inserted = List.from(row);
 
@@ -1362,7 +1365,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     });
   }
 
- void setTimeDetails() {
+  void setTimeDetails() {
     DateTime now = DateTime.now();
     date =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
@@ -1492,8 +1495,6 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     print(_lat);
   }
 
-  
-
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
     if (res.statusCode == 200) {
@@ -1553,13 +1554,12 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     });
   }
 
-  String time_new="";
-
+  String time_new = "";
 
   Future<void> dataToServer() async {
     if (_customTime != "") {
       time_new = _customTime;
-    }else{
+    } else {
       time_new = time;
     }
     List<dynamic> row = [
@@ -1655,7 +1655,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   }
 
   void showDataInTable(
-    BuildContext context, _DataCollectionState dataCollection) {
+      BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1776,9 +1776,6 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       });
     }
   }
-
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -1933,7 +1930,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     });
   }
 
- void setTimeDetails() {
+  void setTimeDetails() {
     DateTime now = DateTime.now();
     date =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
@@ -2063,8 +2060,6 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     print(_lat);
   }
 
-  
-
   Future<void> getConnectionDetails() async {
     final res = await http.get(Uri.parse('http://ip-api.com/json'));
     if (res.statusCode == 200) {
@@ -2124,13 +2119,12 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     });
   }
 
-  String time_new="";
-
+  String time_new = "";
 
   Future<void> dataToServer() async {
     if (_customTime != "") {
       time_new = _customTime;
-    }else{
+    } else {
       time_new = time;
     }
     List<dynamic> row = [
@@ -2226,7 +2220,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   }
 
   void showDataInTable(
-    BuildContext context, _DataCollectionState dataCollection) {
+      BuildContext context, _DataCollectionState dataCollection) {
     showDialog(
       context: context,
       builder: (context) {
@@ -2409,12 +2403,133 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   }
 }
 
+class MapScreen extends StatefulWidget {
+  @override
+  _MapScreenState createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  // final List<Map<String, dynamic>> _locations = [
+  //   {'lat': 13.011730, 'long': 80.236482, 'isp': 'ISP1', 'type': '4G'},
+  //   {'lat': 13.012901, 'long': 80.235874, 'isp': 'ISP2', 'type': '5G'},
+  //   {'lat': 13.0151438, 'long': 80.2398478, 'isp': 'ISP1', 'type': '4G'},
+  //   {'lat': 13.0154108, 'long': 80.239842, 'isp': 'ISP2', 'type': '5G'},
+  //   // Add more locations as needed
+  // ];
+
+  final List<Map<String, dynamic>> _locations = [];
+  final Dio _dio = Dio();
+  @override
+  void initState() {
+    super.initState();
+    fetchLocations();
+  }
+
+  Future<void> fetchLocations() async {
+    final url = 'http://74.225.246.68/tempo_spatial_data';
+    const int maxRetries = 10;
+    int retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        final response = await _dio.get(url,
+            options: Options(
+              receiveTimeout: 10000, // 10 seconds
+              sendTimeout: 10000, // 10 seconds
+            ));
+        if (response.statusCode == 200) {
+          try {
+            final List<dynamic> data = response.data['tempo_spatial_data'];
+            setState(() {
+              _locations.addAll(data
+                  .map((item) => {
+                        'lat': item['lat'],
+                        'long': item['long'],
+                        'isp': item['isp'],
+                        'type': item['connection_type'],
+                        'd_speed': item['download_speed'] ?? 0.0,
+                        'u_speed': item['upload_speed'] ?? 0.0,
+                      })
+                  .toList());
+            });
+            print(_locations);
+            return; // Exit the loop if successful
+          } catch (e) {
+            print('Error parsing JSON: $e');
+            return; // Exit the loop if parsing fails
+          }
+        } else {
+          print('Error fetching locations -: ${response.statusCode}');
+          return; // Exit the loop if response status is not 200
+        }
+      } on DioError catch (e) {
+        print('DioError: $e');
+      } catch (e) {
+        print('Error fetching locations: $e');
+      }
+
+      retryCount++;
+      final delay = Duration(seconds: 2 * retryCount); // Exponential backoff
+      print('Retrying in ${delay.inSeconds} seconds...');
+      await Future.delayed(delay);
+    }
+
+    print('Failed to fetch locations after $maxRetries attempts.');
+  }
+
+  // Handle the map tap action
+  void _handleTap(TapPosition point, latLng.LatLng tappedPoint) {
+    print("Tapped location: ${tappedPoint.latitude}, ${tappedPoint.longitude}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print("MapScreen Clicked");
+    return Scaffold(
+      appBar: AppBar(title: Text('Collected Areas 🔵- 4G 🟢 - 5G')),
+      body: FlutterMap(
+        options: MapOptions(
+          initialCenter: latLng.LatLng(13.010887, 80.235406),
+          initialZoom: 17.0,
+          onLongPress: (tapPosition, point) => _handleTap(tapPosition, point),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate:
+                'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=9b3551f1-aff7-4ea2-b95d-09b880bf68d7',
+            subdomains: ['a', 'b', 'c'],
+            retinaMode: true,
+            // Optional, for load balancing
+          ),
+          MarkerLayer(
+            markers: _locations.map((location) {
+              return Marker(
+                width: 80.0,
+                height: 80.0,
+                point: latLng.LatLng(location['lat'], location['long']),
+                // Pass the widget directly instead of using builder
+                child: Icon(
+                  location['type'] == '5G' ? Icons.location_on : Icons.circle,
+                  color: location['type'] == '4G'
+                      ? Colors.blue.withOpacity(0.3)
+                      : Colors.green.withOpacity(0.2),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MyAppState extends State<MyApp> {
   int _currentIndex = 0;
 
   final List<Widget> _children = [
     DataCollection(),
     PredictionScreen(),
+    MapScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -2440,6 +2555,10 @@ class _MyAppState extends State<MyApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics),
               label: 'Prediction',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map),
+              label: 'Map', // Add a new BottomNavigationBarItem
             ),
           ],
         ),
