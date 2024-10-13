@@ -2500,9 +2500,17 @@ class _MapScreenState extends State<MapScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Collected Areas ')),
+      appBar: AppBar(title: Text('Collected Areas')),
       body: Column(
         children: [
+          // Display number of rows in tempo_spatial_data
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Number of Rows: ${_locations.length}', // Display the row count
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
           // Dropdown for selecting type (4G/5G)
           Padding(
             padding: const EdgeInsets.all(8.0),
