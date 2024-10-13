@@ -47,7 +47,7 @@ class _DataCollectionState extends State<DataCollection> {
   int _ping = 0;
 
   String _envType = 'Free';
-  String _locName = 'KP'; 
+  String _locName = 'KP';
   String _env = 'Outdoor';
   int _floor = 0;
   String temp = '';
@@ -409,7 +409,7 @@ class _DataCollectionState extends State<DataCollection> {
 
   void getOtherMetricsAndRepeat() async {
     await getOtherMetrics();
-    print("send success");
+    print("send 4 success");
     if (_isCollectingData) startTest();
   }
 
@@ -421,6 +421,7 @@ class _DataCollectionState extends State<DataCollection> {
       await getConnectionDetails();
       await getStrength();
       await sendToServer();
+      print("One iteration finished");
     }
     // addEntry();
   }
@@ -598,7 +599,6 @@ class _DataCollectionState extends State<DataCollection> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  
                                   DropdownButton<String>(
                                     value: _locName,
                                     items: <String>[
@@ -985,7 +985,6 @@ class _DataCollectionState extends State<DataCollection> {
                           child: Text("Start Data Collection".toUpperCase(),
                               style: const TextStyle(color: Colors.white)),
                         ),
-
                         ElevatedButton(
                           onPressed: stopDataCollection,
                           style: ElevatedButton.styleFrom(
@@ -1644,27 +1643,77 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
         data = data['output'];
         print("predicitions 8");
         print(data);
-        double downloadSpeed = data['download_speed'] ?? 'Unknown ';
-        double uploadSpeed = data['upload_speed'] ?? 'Unknown';
-        double latency = data['latency'] ?? 'Unknown';
-        double rsrp = data['rsrp'] ?? 'Unknown';
+
+        double downloadSpeed = data['download_speed'] != null
+            ? double.tryParse(data['download_speed'].toString()) ?? 0.0
+            : 0.0;
+        double uploadSpeed = data['upload_speed'] != null
+            ? double.tryParse(data['upload_speed'].toString()) ?? 0.0
+            : 0.0;
+        double latency = data['latency'] != null
+            ? double.tryParse(data['latency'].toString()) ?? 0.0
+            : 0.0;
+        double rsrp = data['rsrp'] != null
+            ? double.tryParse(data['rsrp'].toString()) ?? 0.0
+            : 0.0;
+
+        String formattedDownloadSpeed = downloadSpeed.toStringAsFixed(2);
+        String formattedUploadSpeed = uploadSpeed.toStringAsFixed(2);
+        String formattedLatency = latency.toStringAsFixed(2);
+        String formattedRsrp = rsrp.toStringAsFixed(2);
 
         showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text('Predicted Values'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Predicted Values',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                  fontSize: 22,
+                ),
+                textAlign: TextAlign.center,
+              ),
               content: SizedBox(
-                height: 200,
+                height: 220,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Download Speed: $downloadSpeed'),
-                    Text('Upload Speed: $uploadSpeed'),
-                    Text('Latency: $latency'),
-                    Text('RSRP: $rsrp'),
+                    _buildInfoRow('Download Speed',
+                        '$formattedDownloadSpeed Mbps', Icons.download_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow('Upload Speed', '$formattedUploadSpeed Mbps',
+                        Icons.upload_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow(
+                        'Latency', '$formattedLatency ms', Icons.timer_rounded),
+                    SizedBox(height: 10),
+                    _buildInfoRow('RSRP', '$formattedRsrp dbm',
+                        Icons.network_cell_rounded),
                   ],
                 ),
               ),
+              actions: [
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: Text('Close'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -1674,6 +1723,29 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     } catch (e) {
       print('Error sending data: $e');
     }
+  }
+
+// Helper function to build each info row with an icon
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blueAccent),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            '$label: ',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
   }
 
   void showDataInTable(
