@@ -19,6 +19,85 @@ import 'package:speed_test_dart/classes/server.dart';
 import 'package:flutter/services.dart';
 import 'package:speed_test_dart/speed_test_dart.dart';
 
+class Zone {
+  final List<double> latRange;
+  final List<double> longRange;
+
+  Zone(this.latRange, this.longRange);
+}
+
+final Map<String, Zone> locations = {
+  "Red Building":
+      Zone([13.0106469263, 13.0115584619], [80.2345254977, 80.2364459594]),
+  "IT department":
+      Zone([13.0127887755, 13.0130829729], [80.2358313919, 80.2362461123]),
+  "Printing Technology department":
+      Zone([13.0131002008, 13.0135377581], [80.234950507, 80.2358287049]),
+  "Knowledge Park":
+      Zone([13.0134038425, 13.0139730405], [80.2350035079, 80.2359345894]),
+  "Printing department road":
+      Zone([13.0130563693, 13.0132195397], [80.2349427323, 80.2357248775]),
+  "Power system department":
+      Zone([13.0127609426, 13.0131747455], [80.2348974879, 80.2357569503]),
+  "ECE department":
+      Zone([13.0123377022, 13.0128724407], [80.2348227688, 80.2357155031]),
+  "CSE department":
+      Zone([13.0122552884, 13.0128464302], [80.2356945124, 80.2362179826]),
+  "Science & Humanities Block":
+      Zone([13.0117443695, 13.0124159534], [80.2347283788, 80.2365721883]),
+  "Vivekananda Auditorium":
+      Zone([13.0114039009, 13.011855302], [80.2357608858, 80.2364878071]),
+  "CPDE": Zone([13.011498538, 13.0119360268], [80.2351888109, 80.2358171414]),
+  "Math Department":
+      Zone([13.0111687835, 13.0115386752], [80.235159064, 80.2358128224]),
+  "RED Building":
+      Zone([13.0106132908, 13.0113415056], [80.2344936148, 80.2363769027]),
+  "HOSTEL":
+      Zone([13.0142035149, 13.0152114705], [80.2369730816, 80.2403523008]),
+  "Hostel":
+      Zone([13.0148883167, 13.0157400337], [80.2370686033, 80.2404260293]),
+  "Blue Shed":
+      Zone([13.0130537131, 13.0135436682], [80.2356491041, 80.2363451209]),
+  "College Road":
+      Zone([13.0106663118, 13.0132207973], [80.2363274277, 80.2367859476]),
+  "IT department Road":
+      Zone([13.0123336216, 13.0131060849], [80.2356372534, 80.2358094323]),
+  "Ground":
+      Zone([13.0106263869, 13.0124589081], [80.2365263802, 80.2397439598]),
+  "Library":
+      Zone([13.0100720537, 13.0107083604], [80.2370151598, 80.2381814022]),
+  "Mech Department":
+      Zone([13.0110955561, 13.0131682056], [80.2324025618, 80.2333743176]),
+  "EEE Department":
+      Zone([13.0112133111, 13.0116299416], [80.233775207, 80.2345744842]),
+  "Manufacturing Department":
+      Zone([13.0115340867, 13.0122305407], [80.2338114139, 80.2346615185]),
+  "Civil Department":
+      Zone([13.0104006491, 13.0110965925], [80.2323869819, 80.2340457073]),
+  "Industrial Department":
+      Zone([13.009825765, 13.0104024553], [80.2336158562, 80.2342973906]),
+  "NCC Area":
+      Zone([13.0121811587, 13.0129828063], [80.2338946883, 80.2348276967]),
+};
+
+bool isInRange(double target, List<double> range) {
+  return target >= range[0] && target <= range[1];
+}
+
+String giveCollegeLocation(double latitude, double longitude) {
+  print('$latitude, $longitude');
+
+  for (var loc in locations.entries) {
+    var zone = loc.value;
+    if (isInRange(latitude, zone.latRange) &&
+        isInRange(longitude, zone.longRange)) {
+      return loc.key;
+    }
+  }
+
+  return "Outside Campus";
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
@@ -48,7 +127,7 @@ class _DataCollectionState extends State<DataCollection> {
   int _ping = 0;
 
   String _envType = 'Free';
-  String _locName = 'KP';
+
   String _env = 'Outdoor';
   int _floor = 0;
   String temp = '';
@@ -57,6 +136,7 @@ class _DataCollectionState extends State<DataCollection> {
   String climate = '';
   String contributor = '';
   String signal_strength = '';
+  String locationName = '';
 
   var gsmStrength;
   var gsmData;
@@ -249,7 +329,9 @@ class _DataCollectionState extends State<DataCollection> {
     setState(() {
       long = pos.longitude.toString();
       lat = pos.latitude.toString();
+      locationName = giveCollegeLocation(pos.latitude, pos.longitude);
     });
+    print("Location: $locationName");
   }
 
   Future<void> _getWeather() async {
@@ -448,7 +530,7 @@ class _DataCollectionState extends State<DataCollection> {
       temp,
       climate,
       _envType,
-      _locName,
+      locationName,
       _floor.toString(),
       mobility,
       velocity,
@@ -521,6 +603,40 @@ class _DataCollectionState extends State<DataCollection> {
     );
   }
 
+  TableRow _buildTableRow(String label, String value,
+      {bool isHeader = false, bool isAlternate = false}) {
+    return TableRow(
+      decoration: BoxDecoration(
+        color: isHeader
+            ? const Color.fromARGB(255, 78, 101, 141)
+            : (isAlternate ? Colors.grey[100] : Colors.white),
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isHeader ? 16 : 14,
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              color: isHeader ? Colors.white : Colors.black87,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: isHeader ? 16 : 14,
+              color: isHeader ? Colors.white : Colors.black54,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -553,17 +669,17 @@ class _DataCollectionState extends State<DataCollection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
+                            SizedBox(width: 30),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Environment Type',
+                                    'Env Type',
                                     style: TextStyle(
-                                      fontSize:
-                                          14, // Slightly reduced font size
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -588,51 +704,7 @@ class _DataCollectionState extends State<DataCollection> {
                                 ],
                               ),
                             ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Location Name',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  DropdownButton<String>(
-                                    value: _locName,
-                                    items: <String>[
-                                      'KP',
-                                      'IT Department',
-                                      'Red Building',
-                                      'Blueshed',
-                                      'Hostel Road',
-                                      'Senbagam Hostel',
-                                      'Library',
-                                      'Printing Department',
-                                      'Alumni Center'
-                                    ].map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        _locName = newValue!;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
+                            SizedBox(width: 15),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,25 +767,80 @@ class _DataCollectionState extends State<DataCollection> {
                           ],
                         ),
                         SizedBox(height: 20),
-                        Text(
-                          'Contributor Name',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Contributor Name',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextField(
+                                      controller: _controller_2,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) {
+                                        _saveInput(value);
+                                        setState(() {
+                                          contributor = value;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        TextField(
-                          controller: _controller_2,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        ElevatedButton(
+                          onPressed: startDataCollection,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 78, 101, 141),
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
                           ),
-                          onChanged: (value) {
-                            _saveInput(value);
-                            print("passed");
-                            setState(() {
-                              contributor = value;
-                            });
-                          },
+                          child: Text("Start".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
+                        ),
+                        ElevatedButton(
+                          onPressed: stopDataCollection,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 78, 101, 141),
+                            textStyle: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: Text("Stop".toUpperCase(),
+                              style: const TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -738,227 +865,111 @@ class _DataCollectionState extends State<DataCollection> {
                   ),
                   Container(
                     alignment: Alignment.topLeft,
-                    margin: const EdgeInsets.only(left: 10, right: 10),
-                    child: Table(
-                      border: TableBorder.all(color: Colors.black, width: 1),
-                      columnWidths: const {
-                        0: IntrinsicColumnWidth(),
-                        1: FlexColumnWidth()
-                      },
-                      defaultVerticalAlignment:
-                          TableCellVerticalAlignment.middle,
-                      children: [
-                        TableRow(children: [
-                          tableCellPadding('Mobility Status:'),
-                          tableCellPadding('$mobility')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Movement Spped:'),
-                          tableCellPadding('$velocity m/s')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Ping:'),
-                          tableCellPadding('$_ping ms')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Download speed:'),
-                          tableCellPadding(
-                              '${_downloadSpeed.toStringAsFixed(2)} Mbps'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Upload speed:'),
-                          tableCellPadding(
-                              '${_uploadSpeed.toStringAsFixed(2)} Mbps')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Signal Strength:'),
-                          tableCellPadding('$signal_strength dBm')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Connection Type:'),
-                          tableCellPadding('$_connectionType')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('User ISP:'),
-                          tableCellPadding('$_isp')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Latitude:'),
-                          tableCellPadding('$lat')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Longitude:'),
-                          tableCellPadding('$long')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Time:'),
-                          tableCellPadding('$time')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Date:'),
-                          tableCellPadding('$date')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Day:'),
-                          tableCellPadding('$day')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Type of Day:'),
-                          tableCellPadding('$dayType')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Session:'),
-                          tableCellPadding('$session')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Temperature:'),
-                          tableCellPadding('$temp c')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Climate'),
-                          tableCellPadding('$climate')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Environment Type:'),
-                          tableCellPadding('$_envType')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Location Name:'),
-                          tableCellPadding('$_locName')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Environment:'),
-                          tableCellPadding('$_env')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Floor:'),
-                          tableCellPadding('$_floor')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('Contributor Name:'),
-                          tableCellPadding('$contributor')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) GsmStrength:'),
-                          tableCellPadding('$gsmStrength')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) GsmData:'),
-                          tableCellPadding('$gsmData')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) rssi:'),
-                          tableCellPadding('$rssi')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) AsuLevel'),
-                          tableCellPadding('$gsm_asuLevel')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) level'),
-                          tableCellPadding('$level')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 2G ) band:'),
-                          tableCellPadding('$gsm_band')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) cdmaDbm:'),
-                          tableCellPadding('$cdmaDbm')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) cdmaEcio'),
-                          tableCellPadding('$cdmaEcio')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) evdoDbm:'),
-                          tableCellPadding('$evdoDbm')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) evdoEcio:'),
-                          tableCellPadding('$evdoEcio')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) ecdoSnr:'),
-                          tableCellPadding('$ecdoSnr')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) cdmaLevel:'),
-                          tableCellPadding('$cdmaLevel')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) asuLevel:'),
-                          tableCellPadding('$cdma_asuLevel')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 3G ) band:'),
-                          tableCellPadding('$cdma_band')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) rsrp:'),
-                          tableCellPadding('$rsrp')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) rsrq:'),
-                          tableCellPadding('$rsrq')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) rssnr:'),
-                          tableCellPadding('$rssnr')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) asuLevel:'),
-                          tableCellPadding('$asu_level')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) cqi:'),
-                          tableCellPadding('$cqi')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 4G ) band:'),
-                          tableCellPadding('$lte_band')
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) rsrp:'),
-                          tableCellPadding('$nr_rsrp'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) rsrq:'),
-                          tableCellPadding('$nr_rsrq'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) ssinr:'),
-                          tableCellPadding('$nr_sssinr'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) dbm:'),
-                          tableCellPadding('$nr_dbm'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) csi_rsrp:'),
-                          tableCellPadding('$nr_csirsrp'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) csi_rsrq:'),
-                          tableCellPadding('$nr_csirsrq'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) csi_sinr:'),
-                          tableCellPadding('$nr_csisinr'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) csi_cqi_report:'),
-                          tableCellPadding('$nr_csicqi'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) timing_advance_micros:'),
-                          tableCellPadding('$nr_timing'),
-                        ]),
-                        TableRow(children: [
-                          tableCellPadding('( 5G ) band:'),
-                          tableCellPadding('$nr_band')
-                        ]),
-                      ],
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Card(
+                      elevation: 4,
+                      margin: EdgeInsets.all(8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Table(
+                          border: TableBorder.all(
+                              color: Colors.grey.shade300, width: 1),
+                          columnWidths: const {
+                            0: IntrinsicColumnWidth(),
+                            1: FlexColumnWidth(),
+                          },
+                          defaultVerticalAlignment:
+                              TableCellVerticalAlignment.middle,
+                          children: [
+                            _buildTableRow("Parameter", "Value",
+                                isHeader: true),
+                            _buildTableRow('Mobility Status:', '$mobility',
+                                isAlternate: true),
+                            _buildTableRow('Movement Speed:', '$velocity m/s'),
+                            _buildTableRow('Ping:', '$_ping ms',
+                                isAlternate: true),
+                            _buildTableRow('Download speed:',
+                                '${_downloadSpeed.toStringAsFixed(2)} Mbps'),
+                            _buildTableRow('Upload speed:',
+                                '${_uploadSpeed.toStringAsFixed(2)} Mbps',
+                                isAlternate: true),
+                            _buildTableRow(
+                                'Signal Strength:', '$signal_strength dBm'),
+                            _buildTableRow(
+                                'Connection Type:', '$_connectionType',
+                                isAlternate: true),
+                            _buildTableRow('User ISP:', '$_isp'),
+                            _buildTableRow('Latitude:', '$lat',
+                                isAlternate: true),
+                            _buildTableRow('Longitude:', '$long'),
+                            _buildTableRow('Location Name:', '$locationName',
+                                isAlternate: true),
+                            _buildTableRow('Floor:', '$_floor'),
+                            _buildTableRow('Time:', '$time', isAlternate: true),
+                            _buildTableRow('Date:', '$date'),
+                            _buildTableRow('Day:', '$day', isAlternate: true),
+                            _buildTableRow('Type of Day:', '$dayType'),
+                            _buildTableRow('Session:', '$session',
+                                isAlternate: true),
+                            _buildTableRow('Temperature:', '$temp °C'),
+                            _buildTableRow('Climate:', '$climate',
+                                isAlternate: true),
+                            _buildTableRow('Environment Type:', '$_envType'),
+                            _buildTableRow('Environment:', '$_env',
+                                isAlternate: true),
+                            _buildTableRow('Contributor Name:', '$contributor'),
+                            _buildTableRow('(2G) GsmStrength:', '$gsmStrength',
+                                isAlternate: true),
+                            _buildTableRow('(2G) GsmData:', '$gsmData'),
+                            _buildTableRow('(2G) rssi:', '$rssi',
+                                isAlternate: true),
+                            _buildTableRow('(2G) AsuLevel:', '$gsm_asuLevel'),
+                            _buildTableRow('(2G) level:', '$level',
+                                isAlternate: true),
+                            _buildTableRow('(2G) band:', '$gsm_band'),
+                            _buildTableRow('(3G) cdmaDbm:', '$cdmaDbm',
+                                isAlternate: true),
+                            _buildTableRow('(3G) cdmaEcio:', '$cdmaEcio'),
+                            _buildTableRow('(3G) evdoDbm:', '$evdoDbm',
+                                isAlternate: true),
+                            _buildTableRow('(3G) evdoEcio:', '$evdoEcio'),
+                            _buildTableRow('(3G) ecdoSnr:', '$ecdoSnr',
+                                isAlternate: true),
+                            _buildTableRow('(3G) cdmaLevel:', '$cdmaLevel'),
+                            _buildTableRow('(3G) asuLevel:', '$cdma_asuLevel',
+                                isAlternate: true),
+                            _buildTableRow('(3G) band:', '$cdma_band'),
+                            _buildTableRow('(4G) rsrp:', '$rsrp',
+                                isAlternate: true),
+                            _buildTableRow('(4G) rsrq:', '$rsrq'),
+                            _buildTableRow('(4G) rssnr:', '$rssnr',
+                                isAlternate: true),
+                            _buildTableRow('(4G) asuLevel:', '$asu_level'),
+                            _buildTableRow('(4G) cqi:', '$cqi',
+                                isAlternate: true),
+                            _buildTableRow('(4G) band:', '$lte_band'),
+                            _buildTableRow('(5G) rsrp:', '$nr_rsrp',
+                                isAlternate: true),
+                            _buildTableRow('(5G) rsrq:', '$nr_rsrq'),
+                            _buildTableRow('(5G) ssinr:', '$nr_sssinr',
+                                isAlternate: true),
+                            _buildTableRow('(5G) dbm:', '$nr_dbm'),
+                            _buildTableRow('(5G) csi_rsrp:', '$nr_csirsrp',
+                                isAlternate: true),
+                            _buildTableRow('(5G) csi_rsrq:', '$nr_csirsrq'),
+                            _buildTableRow('(5G) csi_sinr:', '$nr_csisinr',
+                                isAlternate: true),
+                            _buildTableRow(
+                                '(5G) csi_cqi_report:', '$nr_csicqi'),
+                            _buildTableRow(
+                                '(5G) timing_advance_micros:', '$nr_timing',
+                                isAlternate: true),
+                            _buildTableRow('(5G) band:', '$nr_band'),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   Padding(
@@ -1270,8 +1281,7 @@ class PredictionScreen extends StatelessWidget {
                     print('Custom Location Prediction clicked');
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => Picker()),
+                      MaterialPageRoute(builder: (context) => Picker()),
                     );
                   },
                   child: Text('Custom Location Prediction'),
@@ -1304,7 +1314,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   String temp = '';
   int _ping = 0;
   String _envType = 'Free';
-  String _locName = 'KP';
+
   String _env = 'Outdoor';
   int _floor = 0;
   String _ip = "";
@@ -1317,6 +1327,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
   double _uploadSpeed = 0;
   String _connectionType = "";
   String _customTime = "";
+  String locationName = '';
 
   var gsmStrength;
   var gsmData;
@@ -1506,6 +1517,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     setState(() {
       _long = pos.longitude.toString();
       _lat = pos.latitude.toString();
+      locationName = giveCollegeLocation(pos.latitude, pos.longitude);
     });
     print("location p");
     print(_long);
@@ -1589,7 +1601,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       _ping.toString(),
       _connectionType,
       _isp,
-      // day, 
+      // day,
       "Saturday",
       date,
       dayType,
@@ -1598,7 +1610,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
       temp,
       climate,
       _envType,
-      _locName,
+      locationName,
       _floor.toString(),
       mobility,
       velocity,
@@ -1962,7 +1974,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
   String _connectionType = "";
   String _customLocation = "";
   String _customTime = "";
-
+  String locationName = '';
   var gsmStrength;
   var gsmData;
   var rssi;
@@ -2151,6 +2163,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
     setState(() {
       _long = pos.longitude.toString();
       _lat = pos.latitude.toString();
+      locationName = giveCollegeLocation(pos.latitude, pos.longitude);
     });
     print("location p");
     print(_long);
