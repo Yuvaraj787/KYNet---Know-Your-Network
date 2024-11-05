@@ -13,7 +13,7 @@ import 'package:latlong2/latlong.dart' as latLng; // Import with alias
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Picker.dart';
-
+import 'Location.dart';
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
 import 'package:flutter/services.dart';
@@ -1223,76 +1223,6 @@ class CurrentLocationPrediction extends StatefulWidget {
   @override
   _CurrentLocationPredictionState createState() =>
       _CurrentLocationPredictionState();
-}
-
-class PredictionScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    print("Prediction Screen Clicked");
-    return Scaffold(
-      appBar: AppBar(title: Text('Prediction')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Prediction Screen',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueGrey,
-              ),
-            ),
-            SizedBox(height: 50),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 20,
-              runSpacing: 20,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(120, 120),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    print('Current Location Prediction clicked');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => CurrentLocationPrediction()),
-                    );
-                  },
-                  child: Text('Current Location Prediction'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(120, 120),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    print('Custom Location Prediction clicked');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Picker()),
-                    );
-                  },
-                  child: Text('Custom Location Prediction'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
@@ -2744,6 +2674,7 @@ class _MyAppState extends State<MyApp> {
   final List<Widget> _children = [
     DataCollection(),
     Picker(),
+    Location(),
     MapScreen(),
   ];
 
@@ -2760,6 +2691,7 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         body: _children[_currentIndex],
         bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
           currentIndex: _currentIndex,
           onTap: _onItemTapped,
           items: const [
@@ -2770,6 +2702,10 @@ class _MyAppState extends State<MyApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics),
               label: 'Prediction',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.location_on),
+              label: 'Location',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.map),
