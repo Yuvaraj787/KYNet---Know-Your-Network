@@ -2678,6 +2678,7 @@ class _MyAppState extends State<MyApp> {
     Picker(),
     Location(),
     MapScreen(),
+    Analysis(isShowingMainData: true)
   ];
 
   void _onItemTapped(int index) {
@@ -2702,7 +2703,7 @@ class _MyAppState extends State<MyApp> {
               label: 'Data Collection',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.analytics),
+              icon: Icon(Icons.analytics_outlined),
               label: 'Prediction',
             ),
             BottomNavigationBarItem(
@@ -2712,6 +2713,10 @@ class _MyAppState extends State<MyApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.map),
               label: 'Map', // Add a new BottomNavigationBarItem
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.line_axis_outlined),
+              label: 'Analysis', // Add a new BottomNavigationBarItem
             ),
           ],
         ),
