@@ -131,7 +131,7 @@ class _PickerState extends State<Location> {
 
       // Add locations based on selected operator
       if (selectedOperator == "Airtel") {
-        
+
         locations.addAll((locationCoordinates["red_building_indoor"] ?? []).map(
             (coords) =>
                 latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
@@ -170,9 +170,11 @@ class _PickerState extends State<Location> {
       try {
         int hour = int.parse(selectedTime.toString().split(":")[0]);
         if (hour >= 12) {
+
           locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
               (coords) =>
                   latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
         }
         if (hour >= 18) {
           locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
@@ -629,7 +631,7 @@ class _PickerState extends State<Location> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: Colors.blueAccent.withOpacity(opacity.clamp(
+                                color: const Color.fromARGB(255, 23, 204, 29).withOpacity(opacity.clamp(
                                     0.2,
                                     1.0)), // Clamps the opacity between 0.2 and 1.0
                                 shape: BoxShape.circle,

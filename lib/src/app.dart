@@ -14,6 +14,8 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'Picker.dart';
 import 'Location.dart';
+import 'Analysis.dart';
+
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
 import 'package:flutter/services.dart';
