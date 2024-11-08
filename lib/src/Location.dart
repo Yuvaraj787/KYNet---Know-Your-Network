@@ -14,7 +14,7 @@ class Location extends StatefulWidget {
 
 class _PickerState extends State<Location> {
   final Dio _dio = Dio();
-  final List<latLng.LatLng> locations = [
+  List<latLng.LatLng> locations = [
     latLng.LatLng(13.0151467, 80.2398486),
     latLng.LatLng(13.0151447, 80.2398402),
     latLng.LatLng(13.0151447, 80.2398402),
@@ -34,14 +34,15 @@ class _PickerState extends State<Location> {
     latLng.LatLng(13.0134436, 80.2355255),
     latLng.LatLng(13.0134185, 80.2359906),
     latLng.LatLng(13.0134171, 80.2359884)
-    // Add 18 more lat-long pairs
   ];
 
   var lat;
   var long;
+
   TimeOfDay? selectedTime;
   String? selectedOperator; // To store the selected operator
   String? selectedMobility; // To store the selected mobility status
+  String? selectedEnv; // To store the selected mobility status
 
   @override
   void initState() {
@@ -58,8 +59,166 @@ class _PickerState extends State<Location> {
 
   var selectedMobilityStatus;
 
+  
+    void processLocation() {
+      final Map<String, List<Map<String, double>>> locationCoordinates = {
+        "ece_outdoor": [
+          {"latitude": 13.012467062603482, "longitude": 80.23543457427367},
+          {"latitude": 13.013175656224755, "longitude": 80.23573209388586},
+        ],
+        "KP_indoor": [
+          {"latitude": 13.013663179187677, "longitude": 80.23525876722914},
+          {"latitude": 13.013528488258956, "longitude": 80.23591992192287},
+          {"latitude": 13.013718812376018, "longitude": 80.23522570949444},
+        ],
+        "vivek_audi_outdoor": [
+          {"latitude": 13.011630196427927, "longitude": 80.23635988527906},
+          {"latitude": 13.011591491416814, "longitude": 80.23589363954594},
+        ],
+        "blue_shed": [
+          {"latitude": 13.013517230162423, "longitude": 80.23596398017028},
+          {"latitude": 13.013713159124643, "longitude": 80.2359185154976},
+        ],
+        "vivekaudi_indoor": [
+          {"latitude": 13.011705186658183, "longitude": 80.23599402409981},
+          {"latitude": 13.011646134494056, "longitude": 80.23627282243433},
+        ],
+        "ground": [
+          {"latitude": 13.011844558926603, "longitude": 80.23692410697093},
+          {"latitude": 13.011091671944675, "longitude": 80.23671370389232},
+        ],
+        "IT_department_indoor": [
+          {"latitude": 13.012923126494792, "longitude": 80.23593551061225},
+          {"latitude": 13.012847631606677, "longitude": 80.23615955479009},
+        ],
+        "kp_outdoor": [
+          {"latitude": 13.013450566018454, "longitude": 80.23558268226454},
+          {"latitude": 13.01351801282757, "longitude": 80.23536242184568},
+          {"latitude": 13.013209392429706, "longitude": 80.23572113167067},
+        ],
+        "red_building_indoor": [
+          {"latitude": 13.01097781461135, "longitude": 80.23509972415061},
+          {"latitude": 13.01104482087204, "longitude": 80.23504204452958},
+        ],
+        "red_building_outdoor": [
+          {"latitude": 13.010871901452694, "longitude": 80.23512190862026},
+          {"latitude": 13.010845963529384, "longitude": 80.23561662229304},
+        ],
+        "hostel_outdoor": [
+          {"latitude": 13.01463002521824, "longitude": 80.23770929658207},
+          {"latitude": 13.014529267618002, "longitude": 80.23824137840313},
+        ],
+        "hostel_indoor": [
+          {"latitude": 13.014901420488535, "longitude": 80.23779936685324},
+          {"latitude": 13.015206942961887, "longitude": 80.23967082702993},
+        ],
+        "printing_dep_outdoor": [
+          {"latitude": 13.013259335970913, "longitude": 80.23514185098188},
+          {"latitude": 13.013278459842335, "longitude": 80.235023270769},
+        ],
+        "ncc": [
+          {"latitude": 13.012393848002327, "longitude": 80.23454583756933},
+          {"latitude": 13.012231821269685, "longitude": 80.23466921918636},
+        ],
+      };
+
+      List<latLng.LatLng> locations = [];
+
+       locations.addAll((locationCoordinates["ncc"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+
+      // Add locations based on selected operator
+      if (selectedOperator == "Airtel") {
+        
+        locations.addAll((locationCoordinates["red_building_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["hostel_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["printing_dep_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      } else if (selectedOperator == "Jio") {
+        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["blue_shed"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      } 
+
+      // Add location based on time (checking hour)
+      try {
+        int hour = int.parse(selectedTime.toString().split(":")[0]);
+        if (hour >= 12) {
+          locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
+              (coords) =>
+                  latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        }
+        if (hour >= 18) {
+          locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+          locations.addAll((locationCoordinates["ncc"] ?? []).map((coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        }
+      } catch (e) {
+        print("Invalid time format: $selectedTime");
+      }
+
+      if (selectedEnv == "Indoor") {
+
+        locations.removeWhere((location) {
+          return locationCoordinates.entries
+              .where((entry) => entry.key.contains("outdoor"))
+              .any((entry) => entry.value.any((coords) =>
+                  coords['latitude'] == location.latitude &&
+                  coords['longitude'] == location.longitude));
+        });
+
+      } else if (selectedEnv == "Outdoor") {
+
+        locations.addAll((locationCoordinates["ground"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+                
+        locations.removeWhere((location) {
+          return locationCoordinates.entries
+              .where((entry) => entry.key.contains("indoor"))
+              .any((entry) => entry.value.any((coords) =>
+                  coords['latitude'] == location.latitude &&
+                  coords['longitude'] == location.longitude));
+        });
+      }
+
+
+      // Now, locations will contain the final list of coordinates
+      setState(() {
+        this.locations = locations;
+      });
+    }
+    
+
+
   Future<void> dataToServer() async {
-    // Determine velocity based on selected mobility status
     double velocity = 0.0; // Default velocity
     if (selectedMobilityStatus == 'No Movement') {
       velocity = 0.0;
@@ -89,6 +248,9 @@ class _PickerState extends State<Location> {
                           ? 'Evening'
                           : 'Night';
     }
+
+    // processTime();
+    processLocation();
 
     // {'lat': 13.0152118, 'long': 80.23958, 'connection_type_4G': 1, 'isp_Airtel': 1, 'day_Saturday': 1, 'temperature': 28.7, 'climate_mist': 1, 'env_type_Free': 1, 'mobility_No movement': 1, 'floor': 0, 'movement_speed': 0.1, 'session_Morning': 1, 'day_type_Weekday': 1, 'hour': 11, 'env_Outdoor': 1}
 
@@ -138,6 +300,8 @@ class _PickerState extends State<Location> {
     ];
 
     print(row);
+
+    return;
 
     print("clicked");
     final url = Uri.parse('http://74.225.246.68/predict');
@@ -342,7 +506,27 @@ class _PickerState extends State<Location> {
                     selectedOperator = newValue;
                   });
                 },
-                items: <String>['Airtel', 'Jio', 'BSNL']
+                items: <String>['Airtel', 'Jio']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: DropdownButton<String>(
+                hint: Text('Select Environment'),
+                value: selectedEnv,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedEnv = newValue;
+                  });
+                },
+                items: <String>['Indoor', 'Outdoor']
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -401,10 +585,10 @@ class _PickerState extends State<Location> {
                   ),
                   SizedBox(height: 10),
                   ElevatedButton.icon(
-                    icon: Icon(Icons.check,
+                    icon: Icon(Icons.pin_drop,
                         color: const Color.fromARGB(255, 6, 0, 0)),
                     label: Text(
-                      'Confirm',
+                      'Predict locations',
                       style: TextStyle(
                           fontSize: 18,
                           color: const Color.fromARGB(255, 8, 12, 84)),

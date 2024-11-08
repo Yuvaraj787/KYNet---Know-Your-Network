@@ -141,9 +141,9 @@ class _PickerState extends State<Picker> {
             ? double.tryParse(data['rsrp'].toString()) ?? 0.0
             : 0.0;
 
-        String formattedDownloadSpeed = downloadSpeed.toStringAsFixed(2);
-        String formattedUploadSpeed = uploadSpeed.toStringAsFixed(2);
-        String formattedLatency = latency.toStringAsFixed(2);
+        String formattedDownloadSpeed = downloadSpeed.abs().toStringAsFixed(2);
+        String formattedUploadSpeed = uploadSpeed.abs().toStringAsFixed(2);
+        String formattedLatency = latency.abs().toStringAsFixed(2);
         String formattedRsrp = rsrp.toStringAsFixed(2);
 
         showDialog(
