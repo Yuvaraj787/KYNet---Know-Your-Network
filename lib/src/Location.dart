@@ -14,27 +14,7 @@ class Location extends StatefulWidget {
 
 class _PickerState extends State<Location> {
   final Dio _dio = Dio();
-  List<latLng.LatLng> locations = [
-    latLng.LatLng(13.0151467, 80.2398486),
-    latLng.LatLng(13.0151447, 80.2398402),
-    latLng.LatLng(13.0151447, 80.2398402),
-    latLng.LatLng(13.0148499, 80.2385495),
-    latLng.LatLng(13.014848, 80.2384502),
-    latLng.LatLng(13.0148726, 80.2384328),
-    latLng.LatLng(13.0148896, 80.2384142),
-    latLng.LatLng(13.0149049, 80.2383923),
-    latLng.LatLng(13.0149226, 80.2383742),
-    latLng.LatLng(13.0149275, 80.2383537),
-    latLng.LatLng(13.0151345, 80.2379197),
-    latLng.LatLng(13.0152333, 80.2376833),
-    latLng.LatLng(13.0134341, 80.2362224),
-    latLng.LatLng(13.0134628, 80.2359921),
-    latLng.LatLng(13.0134882, 80.2359817),
-    latLng.LatLng(13.013445, 80.2361883),
-    latLng.LatLng(13.0134436, 80.2355255),
-    latLng.LatLng(13.0134185, 80.2359906),
-    latLng.LatLng(13.0134171, 80.2359884)
-  ];
+  List<latLng.LatLng> locations = [];
 
   var lat;
   var long;
@@ -59,168 +39,308 @@ class _PickerState extends State<Location> {
 
   var selectedMobilityStatus;
 
-  
-    void processLocation() {
-      final Map<String, List<Map<String, double>>> locationCoordinates = {
-        "ece_outdoor": [
-          {"latitude": 13.012467062603482, "longitude": 80.23543457427367},
-          {"latitude": 13.013175656224755, "longitude": 80.23573209388586},
-        ],
-        "KP_indoor": [
-          {"latitude": 13.013663179187677, "longitude": 80.23525876722914},
-          {"latitude": 13.013528488258956, "longitude": 80.23591992192287},
-          {"latitude": 13.013718812376018, "longitude": 80.23522570949444},
-        ],
-        "vivek_audi_outdoor": [
-          {"latitude": 13.011630196427927, "longitude": 80.23635988527906},
-          {"latitude": 13.011591491416814, "longitude": 80.23589363954594},
-        ],
-        "blue_shed": [
-          {"latitude": 13.013517230162423, "longitude": 80.23596398017028},
-          {"latitude": 13.013713159124643, "longitude": 80.2359185154976},
-        ],
-        "vivekaudi_indoor": [
-          {"latitude": 13.011705186658183, "longitude": 80.23599402409981},
-          {"latitude": 13.011646134494056, "longitude": 80.23627282243433},
-        ],
-        "ground": [
-          {"latitude": 13.011844558926603, "longitude": 80.23692410697093},
-          {"latitude": 13.011091671944675, "longitude": 80.23671370389232},
-        ],
-        "IT_department_indoor": [
-          {"latitude": 13.012923126494792, "longitude": 80.23593551061225},
-          {"latitude": 13.012847631606677, "longitude": 80.23615955479009},
-        ],
-        "kp_outdoor": [
-          {"latitude": 13.013450566018454, "longitude": 80.23558268226454},
-          {"latitude": 13.01351801282757, "longitude": 80.23536242184568},
-          {"latitude": 13.013209392429706, "longitude": 80.23572113167067},
-        ],
-        "red_building_indoor": [
-          {"latitude": 13.01097781461135, "longitude": 80.23509972415061},
-          {"latitude": 13.01104482087204, "longitude": 80.23504204452958},
-        ],
-        "red_building_outdoor": [
-          {"latitude": 13.010871901452694, "longitude": 80.23512190862026},
-          {"latitude": 13.010845963529384, "longitude": 80.23561662229304},
-        ],
-        "hostel_outdoor": [
-          {"latitude": 13.01463002521824, "longitude": 80.23770929658207},
-          {"latitude": 13.014529267618002, "longitude": 80.23824137840313},
-        ],
-        "hostel_indoor": [
-          {"latitude": 13.014901420488535, "longitude": 80.23779936685324},
-          {"latitude": 13.015206942961887, "longitude": 80.23967082702993},
-        ],
-        "printing_dep_outdoor": [
-          {"latitude": 13.013259335970913, "longitude": 80.23514185098188},
-          {"latitude": 13.013278459842335, "longitude": 80.235023270769},
-        ],
-        "ncc": [
-          {"latitude": 13.012393848002327, "longitude": 80.23454583756933},
-          {"latitude": 13.012231821269685, "longitude": 80.23466921918636},
-        ],
-      };
+  void processLocation() {
+    final Map<String, List<Map<String, double>>> locationCoordinates = {
+      "ece_outdoor": [
+        {"latitude": 13.012467062603482, "longitude": 80.23543457427367},
+        {"latitude": 13.013175656224755, "longitude": 80.23573209388586},
+      ],
+      "KP_indoor": [
+        {"latitude": 13.013663179187677, "longitude": 80.23525876722914},
+        {"latitude": 13.013528488258956, "longitude": 80.23591992192287},
+        {"latitude": 13.013718812376018, "longitude": 80.23522570949444},
+      ],
+      "vivek_audi_outdoor": [
+        {"latitude": 13.011630196427927, "longitude": 80.23635988527906},
+        {"latitude": 13.011591491416814, "longitude": 80.23589363954594},
+      ],
+      "blue_shed": [
+        {"latitude": 13.013517230162423, "longitude": 80.23596398017028},
+        {"latitude": 13.013713159124643, "longitude": 80.2359185154976},
+      ],
+      "vivekaudi_indoor": [
+        {"latitude": 13.011705186658183, "longitude": 80.23599402409981},
+        {"latitude": 13.011646134494056, "longitude": 80.23627282243433},
+      ],
+      "ground": [
+        {"latitude": 13.011844558926603, "longitude": 80.23692410697093},
+        {"latitude": 13.011091671944675, "longitude": 80.23671370389232},
+      ],
+      "IT_department_indoor": [
+        {"latitude": 13.012923126494792, "longitude": 80.23593551061225},
+        {"latitude": 13.012847631606677, "longitude": 80.23615955479009},
+      ],
+      "kp_outdoor": [
+        {"latitude": 13.013450566018454, "longitude": 80.23558268226454},
+        {"latitude": 13.01351801282757, "longitude": 80.23536242184568},
+        {"latitude": 13.013209392429706, "longitude": 80.23572113167067},
+      ],
+      "red_building_indoor": [
+        {"latitude": 13.01097781461135, "longitude": 80.23509972415061},
+        {"latitude": 13.01104482087204, "longitude": 80.23504204452958},
+      ],
+      "red_building_outdoor": [
+        {"latitude": 13.010871901452694, "longitude": 80.23512190862026},
+        {"latitude": 13.010845963529384, "longitude": 80.23561662229304},
+      ],
+      "hostel_outdoor": [
+        {"latitude": 13.01463002521824, "longitude": 80.23770929658207},
+        {"latitude": 13.014529267618002, "longitude": 80.23824137840313},
+      ],
+      "hostel_indoor": [
+        {"latitude": 13.014901420488535, "longitude": 80.23779936685324},
+        {"latitude": 13.015206942961887, "longitude": 80.23967082702993},
+      ],
+      "printing_dep_outdoor": [
+        {"latitude": 13.013259335970913, "longitude": 80.23514185098188},
+        {"latitude": 13.013278459842335, "longitude": 80.235023270769},
+      ],
+      "ncc": [
+        {"latitude": 13.012393848002327, "longitude": 80.23454583756933},
+        {"latitude": 13.012231821269685, "longitude": 80.23466921918636},
+      ],
+      "gallery": [
+        {"latitude": 13.011648, "longitude": 80.237262},
+        {"latitude": 13.012321, "longitude": 80.237069},
+        {"latitude": 13.012223, "longitude": 80.236876},
+      ],
+      "eee_outdoor": [
+        {"latitude": 13.011215, "longitude": 80.234549},
+        {"latitude": 13.011463, "longitude": 80.234602},
+        {"latitude": 13.011342, "longitude": 80.234564},
+      ],
+      "mining_outdoor": [
+        {"latitude": 13.012709, "longitude": 80.233933},
+        {"latitude": 13.012624, "longitude": 80.233943},
+        {"latitude": 13.012783, "longitude": 80.234012},
+      ],
+    };
 
-      List<latLng.LatLng> locations = [];
+    List<latLng.LatLng> locations = [];
 
-       locations.addAll((locationCoordinates["ncc"] ?? []).map(
+    locations.addAll((locationCoordinates["ncc"] ?? []).map(
+        (coords) => latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+    // Add locations based on selected operator
+    if (selectedOperator == "Airtel") {
+      locations.addAll((locationCoordinates["red_building_indoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["red_building_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+          latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["hostel_indoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["printing_dep_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+    } else if (selectedOperator == "Jio") {
+      locations.addAll((locationCoordinates["red_building_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["eee_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["blue_shed"] ?? []).map((coords) =>
+          latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+          (coords) =>
+              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+    }
+
+    // Add location based on time (checking hour)
+    try {
+      int hour = int.parse(selectedTime.toString().split(":")[0]);
+      if (hour <= 2) {
+        locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["eee_outdoor"] ?? []).map(
             (coords) =>
                 latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
 
-
-      // Add locations based on selected operator
-      if (selectedOperator == "Airtel") {
-
-        locations.addAll((locationCoordinates["red_building_indoor"] ?? []).map(
-            (coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
-            .map((coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
-            (coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        locations.addAll((locationCoordinates["hostel_indoor"] ?? []).map(
-            (coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        locations.addAll((locationCoordinates["printing_dep_outdoor"] ?? [])
-            .map((coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-      } else if (selectedOperator == "Jio") {
-        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
-            .map((coords) =>
-                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
             (coords) =>
                 latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
 
         locations.addAll((locationCoordinates["blue_shed"] ?? []).map(
             (coords) =>
                 latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-      } 
-
-      // Add location based on time (checking hour)
-      try {
-        int hour = int.parse(selectedTime.toString().split(":")[0]);
-        if (hour >= 12) {
-
-          locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
-              (coords) =>
-                  latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-
-        }
-        if (hour >= 18) {
-          locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
-              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-          locations.addAll((locationCoordinates["ncc"] ?? []).map((coords) =>
-              latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-        }
-      } catch (e) {
-        print("Invalid time format: $selectedTime");
       }
-
-      if (selectedEnv == "Indoor") {
-
-        locations.removeWhere((location) {
-          return locationCoordinates.entries
-              .where((entry) => entry.key.contains("outdoor"))
-              .any((entry) => entry.value.any((coords) =>
-                  coords['latitude'] == location.latitude &&
-                  coords['longitude'] == location.longitude));
-        });
-
-      } else if (selectedEnv == "Outdoor") {
-
-        locations.addAll((locationCoordinates["ground"] ?? []).map(
+      if (hour <= 4) {
+        locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
             (coords) =>
                 latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
-                
-        locations.removeWhere((location) {
-          return locationCoordinates.entries
-              .where((entry) => entry.key.contains("indoor"))
-              .any((entry) => entry.value.any((coords) =>
-                  coords['latitude'] == location.latitude &&
-                  coords['longitude'] == location.longitude));
-        });
+        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["eee_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["blue_shed"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
       }
+      if (hour <= 6) {
+        locations.addAll((locationCoordinates["red_building_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 8) {
+        locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["red_building_outdoor"] ?? [])
+            .map((coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 10) {
+        locations.addAll((locationCoordinates["eee_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 12) {
+        locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 14) {
+        locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["ncc"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 16) {
+        locations.addAll((locationCoordinates["KP_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["vivek_audi_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 18) {
+        locations.addAll((locationCoordinates["ece_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["blue_shed"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 20) {
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 22) {
+        locations.addAll((locationCoordinates["vivekaudi_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
 
+        locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["vivek_audi_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
 
-      // Now, locations will contain the final list of coordinates
-      setState(() {
-        this.locations = locations;
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["KP_indoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+      if (hour <= 24) {
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["hostel_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["gallery"] ?? []).map((coords) =>
+            latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+        locations.addAll((locationCoordinates["eee_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["mining_outdoor"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+        locations.addAll((locationCoordinates["blue_shed"] ?? []).map(
+            (coords) =>
+                latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+      }
+    } catch (e) {
+      print("Invalid time format: $selectedTime");
+    }
+
+    if (selectedEnv == "Indoor") {
+      locations.removeWhere((location) {
+        return locationCoordinates.entries
+            .where((entry) => entry.key.contains("outdoor"))
+            .any((entry) => entry.value.any((coords) =>
+                coords['latitude'] == location.latitude &&
+                coords['longitude'] == location.longitude));
+      });
+    } else if (selectedEnv == "Outdoor") {
+      locations.addAll((locationCoordinates["ground"] ?? []).map((coords) =>
+          latLng.LatLng(coords["latitude"]!, coords["longitude"]!)));
+
+      locations.removeWhere((location) {
+        return locationCoordinates.entries
+            .where((entry) => entry.key.contains("indoor"))
+            .any((entry) => entry.value.any((coords) =>
+                coords['latitude'] == location.latitude &&
+                coords['longitude'] == location.longitude));
       });
     }
-    
 
+    // Now, locations will contain the final list of coordinates
+    setState(() {
+      this.locations = locations;
+    });
+  }
 
   Future<void> dataToServer() async {
+    await Future.delayed(Duration(milliseconds: 500));
+
     double velocity = 0.0; // Default velocity
     if (selectedMobilityStatus == 'No Movement') {
       velocity = 0.0;
@@ -631,9 +751,9 @@ class _PickerState extends State<Location> {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: const Color.fromARGB(255, 23, 204, 29).withOpacity(opacity.clamp(
-                                    0.2,
-                                    1.0)), // Clamps the opacity between 0.2 and 1.0
+                                color: const Color.fromARGB(255, 23, 204, 29)
+                                    .withOpacity(opacity.clamp(0.2,
+                                        1.0)), // Clamps the opacity between 0.2 and 1.0
                                 shape: BoxShape.circle,
                               ),
                             ),
