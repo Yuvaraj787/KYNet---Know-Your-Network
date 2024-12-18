@@ -75,9 +75,9 @@ class _PickerState extends State<Picker> {
     String temperature = 'Normal Temperature';
     String climate = 'Mist Climate';
 
-    String formattedTime = selectedTime != null 
-    ? "${selectedTime!.hour.toString().padLeft(2, '0')} :34" 
-    : "Time not selected";
+    String formattedTime = selectedTime != null
+        ? "${selectedTime!.hour.toString().padLeft(2, '0')} :34"
+        : "Time not selected";
 
     // {'lat': 13.0148767, 'long': 80.239345, 'connection_type_4G': 1, 'isp_Airtel': 1, 'day_Saturday': 1, 'temperature': 28.53, 'climate_mist': 1, 'env_type_Free': 1, 'mobility_No movement': 1, 'floor': 0, 'movement_speed': 0.08, 'session_Morning': 1, 'day_type_Weekday': 1, 'hour': 12, 'env_Outdoor': 1}
 
@@ -104,15 +104,21 @@ class _PickerState extends State<Picker> {
       "", // Other fields...
       "", // Fill other empty fields with appropriate values
       "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-      "", "", "", "", "", "", "", ""
-      "Outdoor", // Environment type
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+          "Outdoor", // Environment type
     ];
-
 
     print(row);
 
     print("clicked");
-    final url = Uri.parse('http://74.225.246.68/predict');
+    final url = Uri.parse('http://4.186.60.228:3000/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
     print("collected data");
@@ -396,7 +402,7 @@ class _PickerState extends State<Picker> {
                 ],
               ),
             ), // Time Picker Button
-             Padding(
+            Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
@@ -410,8 +416,8 @@ class _PickerState extends State<Picker> {
                           color: const Color.fromARGB(255, 8, 12, 84)),
                     ),
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
                     onPressed: () {
                       _getCurrentLocation();
@@ -428,8 +434,8 @@ class _PickerState extends State<Picker> {
                           color: const Color.fromARGB(255, 8, 12, 84)),
                     ),
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
                     onPressed: () => _selectTime(context),
                   ),
@@ -444,8 +450,8 @@ class _PickerState extends State<Picker> {
                           color: const Color.fromARGB(255, 8, 12, 84)),
                     ),
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     ),
                     onPressed: dataToServer,
                   ),

@@ -563,7 +563,7 @@ class _DataCollectionState extends State<DataCollection> {
       contributor,
       _env,
     ];
-    final url = Uri.parse('http://74.225.246.68/add_data');
+    final url = Uri.parse('http://4.186.60.228:3000/add_data');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
     print("collected data");
@@ -1575,7 +1575,7 @@ class _CurrentLocationPredictionState extends State<CurrentLocationPrediction> {
     ];
 
     print("clicked");
-    final url = Uri.parse('http://74.225.246.68/predict');
+    final url = Uri.parse('http://4.186.60.228:3000/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
     print("collected data");
@@ -2216,7 +2216,7 @@ class _CustomLocationPredictionState extends State<CustomLocationPrediction> {
       contributor,
       _env,
     ];
-    final url = Uri.parse('http://74.225.246.68/predict');
+    final url = Uri.parse('http://4.186.60.228:3000/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
     print("collected data");
@@ -2473,7 +2473,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> fetchLocations() async {
-    final url = 'http://74.225.246.68/tempo_spatial_data';
+    final url = 'http://4.186.60.228:3000/tempo_spatial_data';
     const int maxRetries = 10;
     int retryCount = 0;
 

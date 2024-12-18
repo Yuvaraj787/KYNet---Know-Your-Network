@@ -426,7 +426,7 @@ class _PickerState extends State<Location> {
     return;
 
     print("clicked");
-    final url = Uri.parse('http://74.225.246.68/predict');
+    final url = Uri.parse('http://4.186.60.228:3000/predict');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({'data': row});
     print("collected data");
