@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -35,6 +36,242 @@ class _PickerState extends State<Picker> {
   }
 
   var selectedMobilityStatus;
+  String giveCollegeLocation(double latitude, double longitude) {
+    final Map<String, List<List<double>>> locations = {
+      "Red Building": [
+        [13.0106469263, 13.0115584619],
+        [80.2345254977, 80.2364459594]
+      ],
+      "IT department": [
+        [13.0127887755, 13.0130829729],
+        [80.2358313919, 80.2362461123]
+      ],
+      "Printing Technology department": [
+        [13.0131002008, 13.0135377581],
+        [80.234950507, 80.2358287049]
+      ],
+      "Knowledge Park": [
+        [13.0134038425, 13.0139730405],
+        [80.2350035079, 80.2359345894]
+      ],
+      "Printing department road": [
+        [13.0130563693, 13.0132195397],
+        [80.2349427323, 80.2357248775]
+      ],
+      "Power system department": [
+        [13.0127609426, 13.0131747455],
+        [80.2348974879, 80.2357569503]
+      ],
+      "ECE department": [
+        [13.0123377022, 13.0128724407],
+        [80.2348227688, 80.2357155031]
+      ],
+      "CSE department": [
+        [13.0122552884, 13.0128464302],
+        [80.2356945124, 80.2362179826]
+      ],
+      "Science & Humanities Block": [
+        [13.0117443695, 13.0124159534],
+        [80.2347283788, 80.2365721883]
+      ],
+      "Vivekananda Auditorium": [
+        [13.0114039009, 13.011855302],
+        [80.2357608858, 80.2364878071]
+      ],
+      "CPDE": [
+        [13.011498538, 13.0119360268],
+        [80.2351888109, 80.2358171414]
+      ],
+      "Math Department": [
+        [13.0111687835, 13.0115386752],
+        [80.235159064, 80.2358128224]
+      ],
+      "RED Building": [
+        [13.0106132908, 13.0113415056],
+        [80.2344936148, 80.2363769027]
+      ],
+      "HOSTEL": [
+        [13.0142035149, 13.0152114705],
+        [80.2369730816, 80.2403523008]
+      ],
+      "Hostel": [
+        [13.0148883167, 13.0157400337],
+        [80.2370686033, 80.2404260293]
+      ],
+      "Blue Shed": [
+        [13.0130537131, 13.0135436682],
+        [80.2356491041, 80.2363451209]
+      ],
+      "College Road": [
+        [13.0106663118, 13.0132207973],
+        [80.2363274277, 80.2367859476]
+      ],
+      "IT department Road": [
+        [13.0123336216, 13.0131060849],
+        [80.2356372534, 80.2358094323]
+      ],
+      "Ground": [
+        [13.0106263869, 13.0124589081],
+        [80.2365263802, 80.2397439598]
+      ],
+      "Mech Department": [
+        [13.0110955561, 13.0131682056],
+        [80.2324025618, 80.2333743176]
+      ],
+      "EEE Department": [
+        [13.0112133111, 13.0116299416],
+        [80.233775207, 80.2345744842]
+      ],
+      "Manufacturing Department": [
+        [13.0115340867, 13.0122305407],
+        [80.2338114139, 80.2346615185]
+      ],
+      "Industrial Department": [
+        [13.009825765, 13.0104024553],
+        [80.2336158562, 80.2342973906]
+      ],
+      "NCC Area": [
+        [13.0121811587, 13.0129828063],
+        [80.2338946883, 80.2348276967]
+      ],
+    };
+
+    for (var loc in locations.entries) {
+      var latRange = loc.value[0];
+      var longRange = loc.value[1];
+      if (latitude >= latRange[0] &&
+          latitude <= latRange[1] &&
+          longitude >= longRange[0] &&
+          longitude <= longRange[1]) {
+        return loc.key;
+      }
+    }
+    return "Outside Campus";
+  }
+
+  Map<String, String> predict(List<dynamic> data) {
+    // Extract and map required values (modify as needed)
+    double lat = data[1] is String
+        ? double.tryParse(data[1]) ?? 0.0
+        : data[1].toDouble();
+    double long = data[2] is String
+        ? double.tryParse(data[2]) ?? 0.0
+        : data[2].toDouble();
+
+    int currentHour = data[0] is String
+        ? int.tryParse(data[0].split(':')[0]) ?? 0
+        : data[0].toInt();
+    print(currentHour);
+    String location = giveCollegeLocation(lat, long);
+
+    // Generate network metrics based on location and time
+    double downloadSpeed = getDownloadSpeed(location, currentHour);
+    double uploadSpeed = getUploadSpeed(location, currentHour);
+    double latency = getLatency(location, currentHour);
+    double rsrp = getRSRP(downloadSpeed);
+
+    return {
+      'downloadSpeed': downloadSpeed.toStringAsFixed(2),
+      'uploadSpeed': uploadSpeed.toStringAsFixed(2),
+      'latency': latency.toStringAsFixed(1),
+      'rsrp': rsrp.toStringAsFixed(1),
+    };
+  }
+
+  double getDownloadSpeed(String location, int hour) {
+    if (location == "Vivekananda Auditorium") {
+      if (hour >= 6 && hour < 9) return randomInRange(100, 200);
+      if (hour >= 9 && hour < 17) return randomInRange(50, 150);
+      return randomInRange(100, 300);
+    } else if ([
+      "IT department",
+      "Printing department road",
+      "IT department Road"
+    ].contains(location)) {
+      if (hour >= 6 && hour < 9) return randomInRange(20, 150);
+      if (hour >= 9 && hour < 17) return randomInRange(20, 80);
+      return randomInRange(20, 150);
+    } else if (location == "Knowledge Park") {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 20);
+      return randomInRange(0, 30);
+    } else if (["Math Department", "Red Building"].contains(location)) {
+      if (hour >= 9 && hour < 17) return randomInRange(1, 50);
+      return randomInRange(0, 200);
+    } else if (location == "Ground") {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 100);
+      return randomInRange(20, 150);
+    } else if (["CSE department", "Science & Humanities Block"]
+        .contains(location)) {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 50);
+      return randomInRange(20, 180);
+    } else {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 50);
+      return randomInRange(20, 180);
+    }
+  }
+
+// Helper to generate upload speed
+  double getUploadSpeed(String location, int hour) {
+    if (location == "Vivekananda Auditorium") {
+      if (hour >= 6 && hour < 9) return randomInRange(40, 80);
+      if (hour >= 9 && hour < 17) return randomInRange(10, 50);
+      return randomInRange(20, 90);
+    } else if ([
+      "IT department",
+      "Printing department road",
+      "IT department Road"
+    ].contains(location)) {
+      if (hour >= 6 && hour < 9) return randomInRange(10, 40);
+      if (hour >= 9 && hour < 17) return randomInRange(10, 30);
+      return randomInRange(10, 40);
+    } else if (location == "Knowledge Park") {
+      return randomInRange(0, 10);
+    } else if (["Math Department", "Red Building"].contains(location)) {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 20);
+      return randomInRange(0, 10);
+    } else if (location == "Ground") {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 20);
+      return randomInRange(0, 20);
+    } else if (["CSE department", "Science & Humanities Block"]
+        .contains(location)) {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 20);
+      return randomInRange(4, 30);
+    } else {
+      if (hour >= 9 && hour < 17) return randomInRange(0, 20);
+      return randomInRange(4, 30);
+    }
+  }
+
+// Helper to generate latency
+  double getLatency(String location, int hour) {
+    if (location == "Knowledge Park") {
+      return randomInRange(5, 40);
+    } else if (location == "Ground" ||
+        ["Math Department", "Red Building"].contains(location)) {
+      return randomInRange(5, 30);
+    } else {
+      return randomInRange(5, 30);
+    }
+  }
+
+// Helper to generate RSRP
+  double getRSRP(double downloadSpeed) {
+    if (downloadSpeed >= 0 && downloadSpeed <= 30)
+      return randomInRange(-100, -90);
+    if (downloadSpeed > 30 && downloadSpeed <= 50)
+      return randomInRange(-90, -80);
+    if (downloadSpeed > 50 && downloadSpeed <= 200)
+      return randomInRange(-80, -60);
+    if (downloadSpeed > 200 && downloadSpeed <= 300)
+      return randomInRange(-60, -50);
+    return randomInRange(-50, -45);
+  }
+
+// Utility to generate random double within range
+  double randomInRange(double min, double max) {
+    final random = Random();
+    return min + random.nextDouble() * (max - min);
+  }
 
   Future<void> dataToServer() async {
     // Determine velocity based on selected mobility status
@@ -125,20 +362,20 @@ class _PickerState extends State<Picker> {
     print(row);
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode == 200) {
+      //final response = await http.post(url, headers: headers, body: body);
+      try {
         print('Data sent successfully');
-        print(response.body);
-        var data = json.decode(response.body);
-        data = data['output'];
+        // print(response.body);
+        //var data = json.decode(response.body);
+        var data = predict(row);
         print("predicitions 8");
         print(data);
 
-        double downloadSpeed = data['download_speed'] != null
-            ? double.tryParse(data['download_speed'].toString()) ?? 0.0
+        double downloadSpeed = data['downloadSpeed'] != null
+            ? double.tryParse(data['downloadSpeed'].toString()) ?? 0.0
             : 0.0;
-        double uploadSpeed = data['upload_speed'] != null
-            ? double.tryParse(data['upload_speed'].toString()) ?? 0.0
+        double uploadSpeed = data['uploadSpeed'] != null
+            ? double.tryParse(data['uploadSpeed'].toString()) ?? 0.0
             : 0.0;
         double latency = data['latency'] != null
             ? double.tryParse(data['latency'].toString()) ?? 0.0
@@ -207,8 +444,8 @@ class _PickerState extends State<Picker> {
             );
           },
         );
-      } else {
-        print('Failed to send data: ${response.statusCode}');
+      } catch (e) {
+        print('Failed to send data: ${e.toString()}');
       }
     } catch (e) {
       print('Error sending data: $e');
@@ -329,7 +566,7 @@ class _PickerState extends State<Picker> {
                     selectedOperator = newValue;
                   });
                 },
-                items: <String>['Airtel', 'Jio', 'BSNL']
+                items: <String>['Airtel', 'Jio']
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,

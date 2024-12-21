@@ -13,6 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^4.0.0
+  csv: ^5.0.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   connectivity_plus: ^6.0.5
@@ -47,3 +48,4 @@ flutter:
   assets:
     # Add assets from the images directory to the application.
     - assets/images/
+    - assets/tempo_spatial_data.csv

@@ -8,6 +8,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng; // Import with alias
 import 'package:dio/dio.dart';
@@ -15,6 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Picker.dart';
 import 'Location.dart';
 import 'Analysis.dart';
+import 'dart:io';
+import 'package:csv/csv.dart';
 
 // experimental
 import 'package:speed_test_dart/classes/server.dart';
@@ -2473,42 +2477,41 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> fetchLocations() async {
-    final url = 'http://4.186.60.228:3000/tempo_spatial_data';
     const int maxRetries = 10;
     int retryCount = 0;
 
     while (retryCount < maxRetries) {
       try {
-        final response = await _dio.get(url,
-            options: Options(
-              receiveTimeout: 10000, // 10 seconds
-              sendTimeout: 10000, // 10 seconds
-            ));
-        if (response.statusCode == 200) {
-          try {
-            final List<dynamic> data = response.data['tempo_spatial_data'];
-            setState(() {
-              _locations.addAll(data
-                  .map((item) => {
-                        'lat': item['lat'],
-                        'long': item['long'],
-                        'isp': item['isp'],
-                        'type': item['connection_type'],
-                        'd_speed': item['download_speed'] ?? 0.0,
-                        'u_speed': item['upload_speed'] ?? 0.0,
-                      })
-                  .toList());
-            });
-            print(_locations);
-            return; // Exit the loop if successful
-          } catch (e) {
-            print('Error parsing JSON: $e');
-            return; // Exit the loop if parsing fails
+        // Load the CSV file as a string
+        final file =
+            await rootBundle.loadString('assets/tempo_spatial_data.csv');
+
+        // Convert CSV string to a list of lists
+        final List<List<dynamic>> csvData =
+            const CsvToListConverter().convert(file);
+
+        // Ensure rows have enough elements before accessing indices
+        setState(() {
+          for (var item in csvData) {
+            if (item.length >= 9) {
+              // Validate row length
+              _locations.add({
+                'lat': double.tryParse(item[3].toString()) ?? 0.0,
+                'long': double.tryParse(item[5].toString()) ?? 0.0,
+                'isp': item[2],
+                'type': item[0],
+                'd_speed': double.tryParse(item[1].toString()) ?? 0.0,
+                'u_speed': double.tryParse(item[8].toString()) ?? 0.0,
+              });
+            } else {
+              print('Skipping invalid row (not enough data): $item');
+              print(item.length);
+            }
           }
-        } else {
-          print('Error fetching locations -: ${response.statusCode}');
-          return; // Exit the loop if response status is not 200
-        }
+        });
+
+        print(_locations);
+        return; // Exit the function if successful
       } on DioError catch (e) {
         print('DioError: $e');
       } catch (e) {
